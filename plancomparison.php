@@ -335,70 +335,82 @@ if (!function_exists('plancomparison_output')) {
         .pc-admin-header {
             background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #2563EB 100%);
             border-radius: 14px;
-            padding: 24px 28px;
+            padding: 20px 24px;
             color: #FFFFFF;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
             box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.25);
         }
         .pc-admin-header-brand {
             display: flex;
             align-items: center;
-            gap: 18px;
+            gap: 14px;
         }
         .pc-admin-logo-box {
-            width: 54px;
-            height: 54px;
+            width: 48px;
+            height: 48px;
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 14px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
+            font-size: 22px;
             color: #FFFFFF;
+            flex-shrink: 0;
         }
         .pc-admin-title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 800;
             margin: 0;
             color: #FFFFFF;
             letter-spacing: -0.3px;
+            line-height: 1.2;
         }
         .pc-admin-desc {
-            font-size: 13.5px;
-            margin: 4px 0 0 0;
+            font-size: 13px;
+            margin: 3px 0 0 0;
             color: #E2E8F0;
             font-weight: 400;
+            line-height: 1.3;
         }
         .pc-admin-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             background: rgba(255, 255, 255, 0.2);
-            padding: 5px 14px;
+            padding: 5px 12px;
             border-radius: 9999px;
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: 700;
             letter-spacing: 0.5px;
             border: 1px solid rgba(255, 255, 255, 0.3);
+            white-space: nowrap;
+        }
+        .pc-admin-tabs-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #E2E8F0;
         }
         .pc-admin-tabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            border-bottom: 2px solid #E2E8F0;
+            gap: 6px;
             padding-bottom: 2px;
+            min-width: max-content;
         }
         .pc-admin-tab-btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 18px;
-            font-size: 13.5px;
+            padding: 9px 16px;
+            font-size: 13px;
             font-weight: 600;
             color: #475569;
             text-decoration: none !important;
@@ -407,6 +419,7 @@ if (!function_exists('plancomparison_output')) {
             position: relative;
             bottom: -2px;
             border-bottom: 2px solid transparent;
+            white-space: nowrap;
         }
         .pc-admin-tab-btn:hover {
             color: #2563EB;
@@ -422,13 +435,14 @@ if (!function_exists('plancomparison_output')) {
             background: #FFFFFF;
             border: 1px solid #E2E8F0;
             border-radius: 12px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         .pc-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 7px;
             padding: 8px 16px;
             border-radius: 8px;
@@ -438,6 +452,7 @@ if (!function_exists('plancomparison_output')) {
             cursor: pointer;
             border: 1px solid transparent;
             transition: all 0.2s;
+            white-space: nowrap;
         }
         .pc-btn-primary {
             background: #2563EB;
@@ -474,6 +489,7 @@ if (!function_exists('plancomparison_output')) {
             border: 1px solid #CBD5E1;
             border-radius: 6px;
             font-size: 13.5px;
+            box-sizing: border-box;
         }
         .pc-input:focus {
             border-color: #2563EB;
@@ -481,22 +497,29 @@ if (!function_exists('plancomparison_output')) {
             box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
         }
         .pc-form-group {
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
         .pc-form-label {
             font-weight: 700;
-            font-size: 13px;
+            font-size: 12.5px;
             color: #1E293B;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             display: block;
+        }
+        .pc-table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 10px;
         }
         .pc-table-grid {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
+            min-width: 600px;
         }
         .pc-table-grid th, .pc-table-grid td {
-            padding: 10px 14px;
+            padding: 10px 12px;
             border: 1px solid #E2E8F0;
             vertical-align: middle;
         }
@@ -505,7 +528,68 @@ if (!function_exists('plancomparison_output')) {
             font-weight: 700;
             color: #334155;
         }
-        </style>
+
+        /* Responsive Layout Grid */
+        .pc-editor-top-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .pc-editor-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .pc-tiers-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        /* Mobile Breakpoints */
+        @media (max-width: 991px) {
+            .pc-editor-top-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .pc-tiers-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 680px) {
+            .pc-card {
+                padding: 16px 12px;
+                border-radius: 10px;
+            }
+            .pc-admin-header {
+                padding: 16px;
+            }
+            .pc-admin-title {
+                font-size: 17px;
+            }
+            .pc-admin-desc {
+                font-size: 12px;
+            }
+            .pc-editor-meta-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .pc-tiers-grid {
+                grid-template-columns: 1fr;
+            }
+            .pc-btn {
+                width: 100%;
+                margin-top: 6px;
+            }
+            .pc-card-header-flex {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 12px;
+            }
+        }
+</style>
         ';
 
         echo '
@@ -522,11 +606,11 @@ if (!function_exists('plancomparison_output')) {
             </div>
         </div>
 
-        <div class="pc-admin-tabs">
+        <div class="pc-admin-tabs-wrapper"><div class="pc-admin-tabs">
             <a href="' . $moduleLink . '&action=matrices" class="pc-admin-tab-btn ' . ($action === 'matrices' ? 'active' : '') . '"><i class="fas fa-th-list"></i> Matrices</a>
             <a href="' . $moduleLink . '&action=display_settings" class="pc-admin-tab-btn ' . ($action === 'display_settings' ? 'active' : '') . '"><i class="fas fa-sliders-h"></i> Display Settings</a>
             <a href="' . $moduleLink . '&action=integration_guide" class="pc-admin-tab-btn ' . ($action === 'integration_guide' ? 'active' : '') . '"><i class="fas fa-code"></i> Integration Guide</a>
-        </div>
+        </div></div>
         ';
 
         // 1. Matrices List
@@ -545,7 +629,7 @@ if (!function_exists('plancomparison_output')) {
             if ($matrices->isEmpty()) {
                 echo '<p style="padding:24px; text-align:center; color:#64748B;">No comparison matrices found. Click "+ Create New Matrix" to build one!</p>';
             } else {
-                echo '<table class="pc-table-grid">';
+                echo '<div class="pc-table-responsive"><table class="pc-table-grid">';
                 echo '<thead><tr>';
                 echo '  <th style="width:40px;">#</th>';
                 echo '  <th>Matrix Name</th>';
@@ -580,7 +664,7 @@ if (!function_exists('plancomparison_output')) {
                     echo '  </td>';
                     echo '</tr>';
                 }
-                echo '</tbody></table>';
+                echo '</tbody></table></div>';
             }
             echo '</div>';
         }
@@ -623,13 +707,13 @@ if (!function_exists('plancomparison_output')) {
             echo '  <button type="submit" class="pc-btn pc-btn-success" style="padding:10px 22px; font-size:14px;"><i class="fas fa-save"></i> 💾 Save Matrix</button>';
             echo '</div>';
 
-            echo '<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; margin-bottom:24px;">';
+            echo '<div class="pc-editor-top-grid">';
             echo '  <div>';
             echo '    <div class="pc-form-group">';
             echo '      <label class="pc-form-label">Internal Matrix Name</label>';
             echo '      <input type="text" name="name" class="pc-input" value="' . plancomparison_h($name) . '" required>';
             echo '    </div>';
-            echo '    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">';
+            echo '    <div class="pc-editor-meta-grid">';
             echo '      <div class="pc-form-group">';
             echo '        <label class="pc-form-label">Section Title</label>';
             echo '        <input type="text" name="title" class="pc-input" value="' . plancomparison_h($title) . '">';
@@ -659,7 +743,7 @@ if (!function_exists('plancomparison_output')) {
             echo '    <h4 style="margin:0; font-size:15px; font-weight:700; color:#1E293B;"><i class="fas fa-layer-group text-primary"></i> Plan Tiers (Columns)</h4>';
             echo '  </div>';
 
-            echo '  <div style="display:grid; grid-template-columns: repeat(' . count($tiers) . ', 1fr); gap:16px;" id="pcTiersGrid">';
+            echo '  <div class="pc-tiers-grid" id="pcTiersGrid">';
             foreach ($tiers as $idx => $t) {
                 echo '  <div style="background:#FFFFFF; border:2px solid ' . (!empty($t['highlight']) ? '#2563EB' : '#E2E8F0') . '; border-radius:12px; padding:16px;">';
                 echo '    <div style="font-weight:700; font-size:12px; color:#64748B; margin-bottom:8px;">Tier #' . ($idx + 1) . '</div>';
@@ -688,7 +772,7 @@ if (!function_exists('plancomparison_output')) {
             echo '    <h4 style="margin:0; font-size:15px; font-weight:700; color:#1E293B;"><i class="fas fa-list-ul text-primary"></i> Specification Rows & Values</h4>';
             echo '  </div>';
 
-            echo '  <table class="pc-table-grid">';
+            echo '  <div class="pc-table-responsive"><table class="pc-table-grid">';
             echo '    <thead><tr>';
             echo '      <th style="width:260px;">Feature Label & Icon</th>';
             echo '      <th>Tooltip Description</th>';
@@ -717,7 +801,7 @@ if (!function_exists('plancomparison_output')) {
                 echo '    </tr>';
             }
 
-            echo '    </tbody></table>';
+            echo '    </tbody></table></div>';
             echo '</div>';
 
             echo '<div style="margin-top:20px; text-align:right;">';
