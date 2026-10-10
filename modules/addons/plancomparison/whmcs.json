@@ -1,0 +1,16 @@
+{
+    "schema": "1.0",
+    "type": "whmcs-addon",
+    "name": "plancomparison",
+    "version": "1.0.0",
+    "license": "MIT",
+    "author": {
+        "name": "Bahari Host",
+        "homepage": "https://baharihost.com"
+    },
+    "description": "Interactive Category & Hardware Specification Comparison Matrix for WHMCS Cart",
+    "requirements": {
+        "php": ">=7.4",
+        "whmcs": ">=8.0"
+    }
+}
