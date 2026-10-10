@@ -760,7 +760,7 @@ if (!function_exists('plancomparison_output')) {
             $matrixId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
             $matrix = $matrixId > 0 ? Capsule::table('mod_plancomparison_matrices')->where('id', $matrixId)->first() : null;
 
-            $name = $matrix ? $matrix->name : 'New Comparison Matrix';
+            $name = $matrix ? $matrix->name : 'Hardware Capabilities Comparison';
             $title = $matrix ? $matrix->title : '⚡ KEY SPECS';
             $subtitle = $matrix ? $matrix->subtitle : 'Compare hardware capabilities across all tiers.';
             $enabled = $matrix ? $matrix->enabled : 1;
@@ -768,137 +768,545 @@ if (!function_exists('plancomparison_output')) {
             if (!is_array($selectedGroups)) $selectedGroups = [];
 
             $tiers = $matrix ? json_decode($matrix->tiers_data, true) : [
-                ['id' => 'budget', 'name' => 'Budget', 'tagline' => 'For Personal Sites', 'badge' => '', 'badge_color' => 'default', 'highlight' => 0, 'button_text' => 'View Plans', 'button_link' => 'cart.php?gid=2'],
+                ['id' => 'budget', 'name' => 'Budget', 'tagline' => 'For Personal Sites', 'badge' => '', 'badge_color' => 'blue', 'highlight' => 0, 'button_text' => 'View Plans', 'button_link' => 'cart.php?gid=2'],
                 ['id' => 'pro', 'name' => 'Pro', 'tagline' => 'For Growing Business', 'badge' => 'MOST POPULAR', 'badge_color' => 'blue', 'highlight' => 1, 'button_text' => 'View Plans', 'button_link' => 'cart.php?gid=3'],
                 ['id' => 'turbo', 'name' => 'Turbo', 'tagline' => 'For High Traffic', 'badge' => 'ULTIMATE POWER', 'badge_color' => 'amber', 'highlight' => 0, 'button_text' => 'View Plans', 'button_link' => 'cart.php?gid=20'],
             ];
 
             $specs = $matrix ? json_decode($matrix->specs_data, true) : [
-                ['id' => 'spec_cpu', 'label' => 'Processor', 'icon' => 'fa-microchip', 'tooltip' => 'Server CPU clock & architecture', 'values' => ['budget' => 'Intel XEON', 'pro' => 'Ryzen 9 (4.5Ghz)', 'turbo' => 'Ryzen 9 (5.7Ghz)']],
-                ['id' => 'spec_ram', 'label' => 'RAM Speed', 'icon' => 'fa-heartbeat', 'tooltip' => 'Memory bus frequency', 'values' => ['budget' => 'DDR4 2400Mhz', 'pro' => 'DDR4 3200Mhz', 'turbo' => 'DDR5 6000Mhz']],
-                ['id' => 'spec_storage', 'label' => 'Storage Tech', 'icon' => 'fa-hdd', 'tooltip' => 'PCIe NVMe SSD generation', 'values' => ['budget' => 'NVMe Gen3', 'pro' => 'NVMe Gen4', 'turbo' => 'NVMe Gen5']],
-                ['id' => 'spec_resources', 'label' => 'Resources', 'icon' => 'fa-server', 'tooltip' => 'CPU/RAM isolation model', 'values' => ['budget' => 'Shared CPU/RAM', 'pro' => 'Shared CPU/RAM', 'turbo' => 'Dedicated Resources']],
-                ['id' => 'spec_lb', 'label' => 'Load Balancer', 'icon' => 'fa-shield-alt', 'tooltip' => 'Traffic load balancer', 'values' => ['budget' => 'no', 'pro' => 'no', 'turbo' => 'yes']],
-                ['id' => 'spec_net', 'label' => 'Network Speed', 'icon' => 'fa-network-wired', 'tooltip' => 'Port uplink bandwidth', 'values' => ['budget' => '500 Mbps', 'pro' => '1 Gbps', 'turbo' => '10 Gbps']],
+                ['id' => 'spec_cpu', 'label' => 'Processor', 'icon' => 'fa-microchip', 'tooltip' => 'Server CPU generation, core clock and architecture', 'values' => ['budget' => 'Intel XEON', 'pro' => 'Ryzen 9 (4.5Ghz)', 'turbo' => 'Ryzen 9 (5.7Ghz)']],
+                ['id' => 'spec_ram', 'label' => 'RAM Speed', 'icon' => 'fa-heartbeat', 'tooltip' => 'Memory technology and bus frequency', 'values' => ['budget' => 'DDR4 2400Mhz', 'pro' => 'DDR4 3200Mhz', 'turbo' => 'DDR5 6000Mhz']],
+                ['id' => 'spec_storage', 'label' => 'Storage Tech', 'icon' => 'fa-hdd', 'tooltip' => 'Fast enterprise NVMe SSD generation', 'values' => ['budget' => 'NVMe Gen3', 'pro' => 'NVMe Gen4', 'turbo' => 'NVMe Gen5']],
+                ['id' => 'spec_resources', 'label' => 'Resources', 'icon' => 'fa-server', 'tooltip' => 'Guaranteed hardware resource isolation model', 'values' => ['budget' => 'Shared CPU/RAM', 'pro' => 'Shared CPU/RAM', 'turbo' => 'Dedicated Resources']],
+                ['id' => 'spec_lb', 'label' => 'Load Balancer', 'icon' => 'fa-shield-alt', 'tooltip' => 'Automated high availability traffic distribution', 'values' => ['budget' => 'no', 'pro' => 'no', 'turbo' => 'yes']],
+                ['id' => 'spec_net', 'label' => 'Network Speed', 'icon' => 'fa-network-wired', 'tooltip' => 'Server uplink bandwidth port speed', 'values' => ['budget' => '500 Mbps', 'pro' => '1 Gbps', 'turbo' => '10 Gbps']],
             ];
 
             $allGroups = Capsule::table('tblproductgroups')->select('id', 'name')->orderBy('order', 'asc')->get();
+            $allProducts = Capsule::table('tblproducts')->select('id', 'gid', 'name')->where('hidden', 0)->orderBy('order', 'asc')->get();
 
-            echo '<div class="pc-card">';
-            echo '<form method="post" action="' . $moduleLink . '&action=save_matrix">';
+            // Library of 25+ Industry Standard Specs
+            $specLibrary = [
+                'Compute & Processor' => [
+                    ['label' => 'Processor', 'icon' => 'fa-microchip', 'tooltip' => 'CPU generation and base/boost frequencies', 'def' => 'Intel Xeon / AMD Ryzen 9'],
+                    ['label' => 'CPU Cores Allocation', 'icon' => 'fa-layer-group', 'tooltip' => 'Dedicated or virtual CPU core count allocated', 'def' => '1 Core / 2 Cores / 4 Cores'],
+                    ['label' => 'Turbo Boost Technology', 'icon' => 'fa-bolt', 'tooltip' => 'Max boosted turbo clock capability', 'def' => 'Up to 5.7 GHz'],
+                    ['label' => 'CPU Architecture', 'icon' => 'fa-cogs', 'tooltip' => 'Underlying CPU core microarchitecture (Zen4/Zen5)', 'def' => 'Zen 4 Architecture'],
+                ],
+                'Memory (RAM)' => [
+                    ['label' => 'RAM Speed', 'icon' => 'fa-heartbeat', 'tooltip' => 'Memory frequency and DDR bus generation', 'def' => 'DDR4 3200Mhz / DDR5 6000Mhz'],
+                    ['label' => 'RAM Memory Allocation', 'icon' => 'fa-memory', 'tooltip' => 'Guaranteed allocated memory limit', 'def' => '2 GB / 4 GB / 8 GB'],
+                    ['label' => 'Resource Isolation', 'icon' => 'fa-server', 'tooltip' => 'Shared vs 100% Dedicated isolated CPU & RAM', 'def' => 'Shared CPU/RAM / Dedicated Resources'],
+                    ['label' => 'ECC Memory Protection', 'icon' => 'fa-check-double', 'tooltip' => 'Error-Correcting Code enterprise server memory', 'def' => 'yes'],
+                ],
+                'Storage & I/O' => [
+                    ['label' => 'Storage Tech', 'icon' => 'fa-hdd', 'tooltip' => 'PCIe NVMe SSD generation and performance tier', 'def' => 'NVMe Gen3 / NVMe Gen4 / NVMe Gen5'],
+                    ['label' => 'NVMe SSD Storage', 'icon' => 'fa-database', 'tooltip' => 'Allocated ultrafast NVMe storage capacity', 'def' => '10 GB / 25 GB / Unlimited NVMe'],
+                    ['label' => 'Disk I/O Speed', 'icon' => 'fa-tachometer-alt', 'tooltip' => 'Input/Output read and write bandwidth limit', 'def' => '50 MB/s / 100 MB/s / 250 MB/s'],
+                    ['label' => 'IOPS Allocation', 'icon' => 'fa-wave-square', 'tooltip' => 'Input/Output operations per second threshold', 'def' => '2048 IOPS / 5000 IOPS / 10000 IOPS'],
+                    ['label' => 'Inodes Limit', 'icon' => 'fa-folder', 'tooltip' => 'Total allowable files and folders count', 'def' => '250,000 / 500,000 / Unlimited Inodes'],
+                    ['label' => 'RAID Mirroring', 'icon' => 'fa-clone', 'tooltip' => 'Hardware RAID data redundancy and disk fault tolerance', 'def' => 'Enterprise RAID 10'],
+                ],
+                'Network & Traffic' => [
+                    ['label' => 'Network Speed', 'icon' => 'fa-network-wired', 'tooltip' => 'Server port uplink network interface speed', 'def' => '500 Mbps / 1 Gbps / 10 Gbps'],
+                    ['label' => 'Monthly Bandwidth', 'icon' => 'fa-exchange-alt', 'tooltip' => 'Monthly premium data transfer allocation', 'def' => '500 GB / 1 TB / Unmetered Bandwidth'],
+                    ['label' => 'BDIX Ultra-Low Latency', 'icon' => 'fa-project-diagram', 'tooltip' => 'Direct BDIX routing with sub-5ms latency across BD', 'def' => 'yes'],
+                    ['label' => 'Anti-DDoS Mitigation', 'icon' => 'fa-shield-virus', 'tooltip' => 'Automated scrubbing and multi-Tbps DDoS protection', 'def' => '10+ Tbps Multi-Layer DDoS Guard'],
+                    ['label' => 'Dedicated IPv4', 'icon' => 'fa-globe', 'tooltip' => 'Dedicated clean static IPv4 address included', 'def' => 'no / no / 1 Dedicated IP'],
+                ],
+                'High Availability & Security' => [
+                    ['label' => 'Load Balancer', 'icon' => 'fa-shield-alt', 'tooltip' => 'Automated traffic distribution and cluster redundancy', 'def' => 'no / no / yes'],
+                    ['label' => 'Automated Backups', 'icon' => 'fa-history', 'tooltip' => 'Automated off-site disaster recovery server backups', 'def' => 'Weekly Backup / Daily Cloud Backup'],
+                    ['label' => 'LiteSpeed Web Server', 'icon' => 'fa-rocket', 'tooltip' => 'LiteSpeed Enterprise web server with LSCache acceleration', 'def' => 'yes'],
+                    ['label' => 'Imunify360 Protection', 'icon' => 'fa-user-shield', 'tooltip' => '6-layer proactive AI security suite & malware cleaner', 'def' => 'yes'],
+                    ['label' => 'Free SSL & HTTP/3', 'icon' => 'fa-lock', 'tooltip' => 'Auto-renewing Wildcard Let\'s Encrypt SSL with HTTP/3', 'def' => 'yes'],
+                ],
+                'Web & Developer Tools' => [
+                    ['label' => 'Websites Hosted', 'icon' => 'fa-sitemap', 'tooltip' => 'Number of independent domain websites allowed', 'def' => '1 Website / 5 Websites / Unlimited Websites'],
+                    ['label' => 'NodeJS / Python / Git', 'icon' => 'fa-code', 'tooltip' => 'Developer app selector and version management', 'def' => 'yes'],
+                    ['label' => 'SSH & Terminal Access', 'icon' => 'fa-terminal', 'tooltip' => 'Encrypted secure command-line shell access', 'def' => 'no / yes / yes'],
+                    ['label' => 'MySQL Databases', 'icon' => 'fa-database', 'tooltip' => 'High-performance MariaDB databases allowed', 'def' => '5 Databases / Unlimited MySQL'],
+                ],
+            ];
+
+            echo '<div class="pc-card" style="box-shadow:0 8px 30px rgba(0,0,0,0.06); border-radius:16px;">';
+            echo '<form method="post" action="' . $moduleLink . '&action=save_matrix" id="pcMatrixForm">';
             echo '<input type="hidden" name="matrix_id" value="' . $matrixId . '">';
 
-            echo '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">';
-            echo '  <h3 style="margin:0; font-size:17px; font-weight:800; color:#0F172A;"><i class="fas fa-edit text-primary"></i> Matrix Editor</h3>';
-            echo '  <button type="submit" class="pc-btn pc-btn-success" style="padding:10px 22px; font-size:14px;"><i class="fas fa-save"></i> 💾 Save Matrix</button>';
+            // Top Actions Bar
+            echo '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid #E2E8F0;">';
+            echo '  <div>';
+            echo '    <h3 style="margin:0 0 4px 0; font-size:19px; font-weight:800; color:#0F172A;"><i class="fas fa-sliders-h text-primary" style="margin-right:6px;"></i> Pro Matrix Editor</h3>';
+            echo '    <p style="margin:0; font-size:13px; color:#64748B;">Visually configure hosting tiers, sync with WHMCS product groups, and insert specs from library.</p>';
+            echo '  </div>';
+            echo '  <div style="display:flex; gap:10px; align-items:center;">';
+            echo '    <a href="' . $moduleLink . '&action=matrices" class="pc-btn pc-btn-secondary"><i class="fas fa-arrow-left"></i> Back to Matrices</a>';
+            echo '    <button type="submit" class="pc-btn pc-btn-success" style="padding:10px 24px; font-size:14px; font-weight:700;"><i class="fas fa-save"></i> 💾 Save Matrix Specifications</button>';
+            echo '  </div>';
             echo '</div>';
 
+            // 1-Click Starter Template Bar
+            echo '<div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:14px 18px; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">';
+            echo '  <div style="display:flex; align-items:center; gap:8px;">';
+            echo '    <span style="font-size:13px; font-weight:700; color:#1E293B;"><i class="fas fa-magic text-warning" style="margin-right:4px;"></i> 1-Click Starter Presets:</span>';
+            echo '    <span style="font-size:12px; color:#64748B;">Instantly load ready-to-use tiers & specs</span>';
+            echo '  </div>';
+            echo '  <div style="display:flex; gap:8px; flex-wrap:wrap;">';
+            echo '    <button type="button" class="pc-btn pc-btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="pcLoadStarterPreset(\'hosting\')"><i class="fas fa-bolt text-primary"></i> Web Hosting (Budget / Pro / Turbo)</button>';
+            echo '    <button type="button" class="pc-btn pc-btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="pcLoadStarterPreset(\'vps\')"><i class="fas fa-server text-success"></i> BDIX High-Performance VPS</button>';
+            echo '    <button type="button" class="pc-btn pc-btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="pcLoadStarterPreset(\'reseller\')"><i class="fas fa-layer-group text-info"></i> Reseller Hosting Tiers</button>';
+            echo '  </div>';
+            echo '</div>';
+
+            // Top Metadata Settings
             echo '<div class="pc-editor-top-grid">';
             echo '  <div>';
             echo '    <div class="pc-form-group">';
-            echo '      <label class="pc-form-label">Internal Matrix Name</label>';
-            echo '      <input type="text" name="name" class="pc-input" value="' . plancomparison_h($name) . '" required>';
+            echo '      <label class="pc-form-label"><i class="fas fa-tag text-primary"></i> Internal Matrix Name</label>';
+            echo '      <input type="text" name="name" class="pc-input" value="' . plancomparison_h($name) . '" placeholder="e.g. Shared Hosting Comparison" required>';
             echo '    </div>';
             echo '    <div class="pc-editor-meta-grid">';
             echo '      <div class="pc-form-group">';
-            echo '        <label class="pc-form-label">Section Title</label>';
-            echo '        <input type="text" name="title" class="pc-input" value="' . plancomparison_h($title) . '">';
+            echo '        <label class="pc-form-label"><i class="fas fa-heading text-primary"></i> Storefront Section Title</label>';
+            echo '        <input type="text" name="title" class="pc-input" value="' . plancomparison_h($title) . '" placeholder="⚡ KEY SPECS">';
             echo '      </div>';
             echo '      <div class="pc-form-group">';
-            echo '        <label class="pc-form-label">Section Subtitle</label>';
-            echo '        <input type="text" name="subtitle" class="pc-input" value="' . plancomparison_h($subtitle) . '">';
+            echo '        <label class="pc-form-label"><i class="fas fa-paragraph text-primary"></i> Section Subtitle</label>';
+            echo '        <input type="text" name="subtitle" class="pc-input" value="' . plancomparison_h($subtitle) . '" placeholder="Compare hardware capabilities across all tiers.">';
             echo '      </div>';
             echo '    </div>';
             echo '  </div>';
 
-            echo '  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:16px;">';
-            echo '    <label class="pc-form-label">Target Product Groups</label>';
-            echo '    <select name="groups[]" multiple size="6" class="pc-input" style="height:120px;">';
+            echo '  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">';
+            echo '    <label class="pc-form-label"><i class="fas fa-bullseye text-primary"></i> Target WHMCS Product Groups</label>';
+            echo '    <select name="groups[]" multiple size="5" class="pc-input" style="height:115px; font-size:12.5px;">';
             foreach ($allGroups as $g) {
                 $sel = in_array($g->id, $selectedGroups) ? 'selected' : '';
                 echo '<option value="' . (int)$g->id . '" ' . $sel . '>' . plancomparison_h($g->name) . '</option>';
             }
             echo '    </select>';
-            echo '    <div style="margin-top:10px;"><label><input type="checkbox" name="enabled" value="1" ' . ($enabled ? 'checked' : '') . '> <strong>Enable this Matrix</strong></label></div>';
+            echo '    <div style="margin-top:10px;"><label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" name="enabled" value="1" ' . ($enabled ? 'checked' : '') . '> <strong style="font-size:12.5px; color:#0F172A;">Enable Matrix on Target Groups</strong></label></div>';
             echo '  </div>';
             echo '</div>';
 
-            // Columns / Tiers Management
-            echo '<div style="margin-bottom:24px;">';
-            echo '  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">';
-            echo '    <h4 style="margin:0; font-size:15px; font-weight:700; color:#1E293B;"><i class="fas fa-layer-group text-primary"></i> Plan Tiers (Columns)</h4>';
+            // Section 1: Tier Columns Manager
+            echo '<div style="margin-bottom:32px;">';
+            echo '  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">';
+            echo '    <div>';
+            echo '      <h4 style="margin:0 0 2px 0; font-size:16px; font-weight:800; color:#0F172A;"><i class="fas fa-columns text-primary" style="margin-right:6px;"></i> Plan Tiers (Matrix Columns)</h4>';
+            echo '      <span style="font-size:12.5px; color:#64748B;">Each tier represents a column in your comparison matrix. Use dropdowns to sync directly with WHMCS groups or packages.</span>';
+            echo '    </div>';
+            echo '    <button type="button" class="pc-btn pc-btn-primary" style="font-size:12.5px; padding:7px 14px;" onclick="pcAddTierColumn()"><i class="fas fa-plus"></i> Add New Tier Column</button>';
             echo '  </div>';
 
-            echo '  <div class="pc-tiers-grid" id="pcTiersGrid">';
+            echo '  <div class="pc-tiers-grid" id="pcTiersContainer">';
             foreach ($tiers as $idx => $t) {
-                echo '  <div style="background:#FFFFFF; border:2px solid ' . (!empty($t['highlight']) ? '#2563EB' : '#E2E8F0') . '; border-radius:12px; padding:16px;">';
-                echo '    <div style="font-weight:700; font-size:12px; color:#64748B; margin-bottom:8px;">Tier #' . ($idx + 1) . '</div>';
-                echo '    <div class="pc-form-group"><label class="pc-form-label">ID (slug)</label><input type="text" name="tiers[' . $idx . '][id]" value="' . plancomparison_h($t['id']) . '" class="pc-input"></div>';
-                echo '    <div class="pc-form-group"><label class="pc-form-label">Tier Name</label><input type="text" name="tiers[' . $idx . '][name]" value="' . plancomparison_h($t['name']) . '" class="pc-input" style="font-weight:700;"></div>';
-                echo '    <div class="pc-form-group"><label class="pc-form-label">Tagline</label><input type="text" name="tiers[' . $idx . '][tagline]" value="' . plancomparison_h($t['tagline']) . '" class="pc-input"></div>';
-                echo '    <div class="pc-form-group"><label class="pc-form-label">Pill Badge</label><input type="text" name="tiers[' . $idx . '][badge]" value="' . plancomparison_h($t['badge']) . '" class="pc-input" placeholder="e.g. MOST POPULAR"></div>';
-                echo '    <div class="pc-form-group"><label class="pc-form-label">Badge Color</label>';
-                echo '      <select name="tiers[' . $idx . '][badge_color]" class="pc-input">';
-                echo '        <option value="blue"' . ($t['badge_color'] === 'blue' ? ' selected' : '') . '>Royal Blue</option>';
-                echo '        <option value="amber"' . ($t['badge_color'] === 'amber' ? ' selected' : '') . '>Amber / Orange</option>';
-                echo '        <option value="green"' . ($t['badge_color'] === 'green' ? ' selected' : '') . '>Green</option>';
+                $isHigh = !empty($t['highlight']);
+                echo '  <div class="pc-tier-editor-card" data-tier-index="' . $idx . '" style="background:#FFFFFF; border:2px solid ' . ($isHigh ? '#2563EB' : '#E2E8F0') . '; border-radius:14px; padding:18px; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.03);">';
+                echo '    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #F1F5F9;">';
+                echo '      <span style="font-weight:800; font-size:13px; color:' . ($isHigh ? '#2563EB' : '#475569') . ';"><i class="fas fa-layer-group"></i> Tier #' . ($idx + 1) . '</span>';
+                echo '      <button type="button" class="pc-btn pc-btn-danger" style="padding:3px 8px; font-size:11px;" onclick="pcRemoveTierColumn(' . $idx . ')" title="Remove Tier"><i class="fas fa-trash"></i></button>';
+                echo '    </div>';
+
+                // WHMCS Group Quick-Link Dropdown
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;">';
+                echo '      <label class="pc-form-label" style="font-size:11.5px; color:#64748B;"><i class="fas fa-link text-primary"></i> Sync from WHMCS Group (Auto-Fill)</label>';
+                echo '      <select class="pc-input" style="font-size:12px; padding:6px 8px; background:#F8FAFC;" onchange="pcSyncTierFromGroup(this, ' . $idx . ')">';
+                echo '        <option value="">-- Choose WHMCS Group to Auto-Fill --</option>';
+                foreach ($allGroups as $g) {
+                    echo '        <option value="' . (int)$g->id . '" data-name="' . plancomparison_h($g->name) . '" data-link="cart.php?gid=' . (int)$g->id . '">' . plancomparison_h($g->name) . ' (GID: ' . (int)$g->id . ')</option>';
+                }
                 echo '      </select>';
                 echo '    </div>';
-                echo '    <div class="pc-form-group"><label><input type="checkbox" name="tiers[' . $idx . '][highlight]" value="1" ' . (!empty($t['highlight']) ? 'checked' : '') . '> <strong>Highlight (Featured Card)</strong></label></div>';
-                echo '    <div class="pc-form-group"><label class="pc-form-label">Button Text</label><input type="text" name="tiers[' . $idx . '][button_text]" value="' . plancomparison_h($t['button_text']) . '" class="pc-input"></div>';
-                echo '    <div class="pc-form-group"><label class="pc-form-label">Button Link</label><input type="text" name="tiers[' . $idx . '][button_link]" value="' . plancomparison_h($t['button_link']) . '" class="pc-input"></div>';
+
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Tier Slug / ID</label><input type="text" name="tiers[' . $idx . '][id]" value="' . plancomparison_h($t['id']) . '" class="pc-input pc-tier-slug" style="font-size:12.5px;" onchange="pcUpdateTierSlug(' . $idx . ', this.value)" required></div>';
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Tier Title</label><input type="text" name="tiers[' . $idx . '][name]" value="' . plancomparison_h($t['name']) . '" class="pc-input pc-tier-name" style="font-weight:700; font-size:13.5px;" required></div>';
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Tagline / Target Audience</label><input type="text" name="tiers[' . $idx . '][tagline]" value="' . plancomparison_h($t['tagline']) . '" class="pc-input" placeholder="e.g. For Personal Sites"></div>';
+
+                // Badge Presets Dropdown & Input
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;">';
+                echo '      <label class="pc-form-label">Promotional Pill Badge</label>';
+                echo '      <div style="display:flex; gap:6px;">';
+                echo '        <input type="text" name="tiers[' . $idx . '][badge]" value="' . plancomparison_h($t['badge']) . '" class="pc-input pc-tier-badge" placeholder="e.g. MOST POPULAR" style="flex:1;">';
+                echo '        <select class="pc-input" style="width:130px; font-size:11.5px;" onchange="this.previousElementSibling.value = this.value">';
+                echo '          <option value="">Presets...</option>';
+                echo '          <option value="MOST POPULAR">MOST POPULAR</option>';
+                echo '          <option value="ULTIMATE POWER">ULTIMATE POWER</option>';
+                echo '          <option value="BEST VALUE">BEST VALUE</option>';
+                echo '          <option value="RECOMMENDED">RECOMMENDED</option>';
+                echo '          <option value="ENTERPRISE">ENTERPRISE</option>';
+                echo '          <option value="HOT OFFER">HOT OFFER</option>';
+                echo '        </select>';
+                echo '      </div>';
+                echo '    </div>';
+
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Badge Color Scheme</label>';
+                echo '      <select name="tiers[' . $idx . '][badge_color]" class="pc-input">';
+                echo '        <option value="blue"' . ($t['badge_color'] === 'blue' ? ' selected' : '') . '>Royal Blue Pill (Dark / White)</option>';
+                echo '        <option value="amber"' . ($t['badge_color'] === 'amber' ? ' selected' : '') . '>Amber / Orange Pill (Warm Outline)</option>';
+                echo '        <option value="green"' . ($t['badge_color'] === 'green' ? ' selected' : '') . '>Emerald Green Pill</option>';
+                echo '      </select>';
+                echo '    </div>';
+
+                echo '    <div class="pc-form-group" style="margin-bottom:12px; background:#F8FAFC; padding:8px 10px; border-radius:6px;"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" name="tiers[' . $idx . '][highlight]" value="1" ' . ($isHigh ? 'checked' : '') . ' onchange="this.closest(\'.pc-tier-editor-card\').style.borderColor = this.checked ? \'#2563EB\' : \'#E2E8F0\'"> <strong style="font-size:12.5px; color:#1E293B;">Highlight Column (Featured / Pro)</strong></label></div>';
+
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Button Text</label><input type="text" name="tiers[' . $idx . '][button_text]" value="' . plancomparison_h($t['button_text']) . '" class="pc-input" placeholder="View Plans"></div>';
+                echo '    <div class="pc-form-group" style="margin-bottom:0;"><label class="pc-form-label">Button Target Link (Cart URL)</label><input type="text" name="tiers[' . $idx . '][button_link]" value="' . plancomparison_h($t['button_link']) . '" class="pc-input pc-tier-link" placeholder="cart.php?gid=2"></div>';
+
                 echo '  </div>';
             }
             echo '  </div>';
             echo '</div>';
 
-            // Rows / Specs Management
-            echo '<div style="margin-bottom:24px;">';
-            echo '  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">';
-            echo '    <h4 style="margin:0; font-size:15px; font-weight:700; color:#1E293B;"><i class="fas fa-list-ul text-primary"></i> Specification Rows & Values</h4>';
+            // Section 2: Specification Rows Library & Table Editor
+            echo '<div style="margin-bottom:32px;">';
+            echo '  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">';
+            echo '    <div>';
+            echo '      <h4 style="margin:0 0 2px 0; font-size:16px; font-weight:800; color:#0F172A;"><i class="fas fa-list-check text-primary" style="margin-right:6px;"></i> Specification Rows & Values</h4>';
+            echo '      <span style="font-size:12.5px; color:#64748B;">Select features from the pre-built library or add custom rows. Use quick tags to populate values.</span>';
+            echo '    </div>';
+
+            // Dropdown Library Quick-Insert Box
+            echo '    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">';
+            echo '      <select id="pcSpecLibrarySelect" class="pc-input" style="width:260px; font-size:12.5px; font-weight:600;">';
+            echo '        <option value="">⚡ Select Feature from Library...</option>';
+            foreach ($specLibrary as $catName => $featList) {
+                echo '        <optgroup label="' . plancomparison_h($catName) . '">';
+                foreach ($featList as $f) {
+                    $jsonPayload = htmlspecialchars(json_encode($f), ENT_QUOTES, 'UTF-8');
+                    echo '          <option value="' . $jsonPayload . '">' . plancomparison_h($f['label']) . '</option>';
+                }
+                echo '        </optgroup>';
+            }
+            echo '      </select>';
+            echo '      <button type="button" class="pc-btn pc-btn-primary" style="font-size:12.5px; padding:8px 14px;" onclick="pcInsertFromLibrary()"><i class="fas fa-plus"></i> + Add from Library</button>';
+            echo '      <button type="button" class="pc-btn pc-btn-secondary" style="font-size:12.5px; padding:8px 12px;" onclick="pcAddCustomSpecRow()"><i class="fas fa-plus-circle"></i> Custom Row</button>';
+            echo '    </div>';
             echo '  </div>';
 
-            echo '  <div class="pc-table-responsive"><table class="pc-table-grid">';
-            echo '    <thead><tr>';
-            echo '      <th style="width:260px;">Feature Label & Icon</th>';
-            echo '      <th>Tooltip Description</th>';
+            // Interactive Spec Grid Table
+            echo '  <div class="pc-table-responsive" style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; overflow:hidden;">';
+            echo '    <table class="pc-table-grid" id="pcSpecsTable">';
+            echo '      <thead><tr>';
+            echo '        <th style="width:40px; text-align:center;">#</th>';
+            echo '        <th style="width:250px;">Specification Label & Icon</th>';
+            echo '        <th style="width:220px;">Hover Tooltip (ⓘ)</th>';
             foreach ($tiers as $t) {
-                echo '      <th style="text-align:center;">' . plancomparison_h($t['name']) . '</th>';
+                echo '        <th class="pc-th-tier-' . plancomparison_h($t['id']) . '" style="text-align:center; min-width:160px;">' . plancomparison_h($t['name']) . '</th>';
             }
-            echo '    </tr></thead><tbody>';
+            echo '        <th style="width:90px; text-align:center;">Actions</th>';
+            echo '      </tr></thead><tbody id="pcSpecsTableBody">';
 
             foreach ($specs as $sIdx => $s) {
-                echo '    <tr>';
-                echo '      <td>';
-                echo '        <input type="hidden" name="specs[' . $sIdx . '][id]" value="' . plancomparison_h($s['id']) . '">';
-                echo '        <div style="margin-bottom:6px;"><input type="text" name="specs[' . $sIdx . '][label]" value="' . plancomparison_h($s['label']) . '" class="pc-input" style="font-weight:700;"></div>';
-                echo '        <div style="display:flex; align-items:center; gap:6px;"><span style="font-size:11px; color:#64748B;">Icon:</span><input type="text" name="specs[' . $sIdx . '][icon]" value="' . plancomparison_h($s['icon']) . '" class="pc-input" style="font-size:11.5px; height:28px;"></div>';
-                echo '      </td>';
-                echo '      <td>';
-                echo '        <textarea name="specs[' . $sIdx . '][tooltip]" class="pc-input" rows="2" style="font-size:12px;">' . plancomparison_h($s['tooltip']) . '</textarea>';
-                echo '      </td>';
+                echo '      <tr class="pc-spec-row-item" data-row-index="' . $sIdx . '">';
+                echo '        <td style="text-align:center; color:#94A3B8; font-weight:700;"><span class="pc-row-num">' . ($sIdx + 1) . '</span></td>';
+                echo '        <td>';
+                echo '          <input type="hidden" name="specs[' . $sIdx . '][id]" value="' . plancomparison_h($s['id']) . '" class="pc-spec-id">';
+                echo '          <div style="margin-bottom:6px;"><input type="text" name="specs[' . $sIdx . '][label]" value="' . plancomparison_h($s['label']) . '" class="pc-input" style="font-weight:700;" placeholder="e.g. RAM Speed" required></div>';
+                echo '          <div style="display:flex; align-items:center; gap:6px;">';
+                echo '            <span style="font-size:11px; color:#64748B;"><i class="fas fa-icons"></i> Icon:</span>';
+                echo '            <input type="text" name="specs[' . $sIdx . '][icon]" value="' . plancomparison_h($s['icon']) . '" class="pc-input" style="font-size:11.5px; padding:4px 8px; height:28px;" placeholder="fa-microchip">';
+                echo '          </div>';
+                echo '        </td>';
+                echo '        <td>';
+                echo '          <textarea name="specs[' . $sIdx . '][tooltip]" class="pc-input" rows="2" style="font-size:12px; resize:vertical;" placeholder="Optional explanation displayed on hover">' . plancomparison_h($s['tooltip']) . '</textarea>';
+                echo '        </td>';
+
                 foreach ($tiers as $t) {
                     $tId = $t['id'];
                     $val = isset($s['values'][$tId]) ? $s['values'][$tId] : '';
-                    echo '      <td>';
-                    echo '        <input type="text" name="specs[' . $sIdx . '][values][' . $tId . ']" value="' . plancomparison_h($val) . '" class="pc-input" placeholder="e.g. Yes, No, DDR4...">';
-                    echo '      </td>';
+                    echo '        <td class="pc-td-tier-' . plancomparison_h($tId) . '" data-tier-id="' . plancomparison_h($tId) . '">';
+                    echo '          <div style="display:flex; flex-direction:column; gap:6px;">';
+                    echo '            <input type="text" name="specs[' . $sIdx . '][values][' . plancomparison_h($tId) . ']" value="' . plancomparison_h($val) . '" class="pc-input pc-val-input" placeholder="Value...">';
+                    echo '            <div style="display:flex; gap:3px; flex-wrap:wrap;">';
+                    echo '              <button type="button" class="pc-btn pc-btn-secondary" style="padding:2px 5px; font-size:10px; border-radius:4px;" onclick="pcSetCellVal(this, \'yes\')">✓ Yes</button>';
+                    echo '              <button type="button" class="pc-btn pc-btn-secondary" style="padding:2px 5px; font-size:10px; border-radius:4px;" onclick="pcSetCellVal(this, \'no\')">— No</button>';
+                    echo '              <button type="button" class="pc-btn pc-btn-secondary" style="padding:2px 5px; font-size:10px; border-radius:4px;" onclick="pcSetCellVal(this, \'Shared\')">Shared</button>';
+                    echo '              <button type="button" class="pc-btn pc-btn-secondary" style="padding:2px 5px; font-size:10px; border-radius:4px;" onclick="pcSetCellVal(this, \'Dedicated\')">Dedicated</button>';
+                    echo '            </div>';
+                    echo '          </div>';
+                    echo '        </td>';
                 }
-                echo '    </tr>';
+
+                echo '        <td style="text-align:center;">';
+                echo '          <div style="display:flex; justify-content:center; gap:4px;">';
+                echo '            <button type="button" class="pc-btn pc-btn-secondary" style="padding:4px 6px; font-size:11px;" onclick="pcMoveRow(this, -1)" title="Move Up"><i class="fas fa-chevron-up"></i></button>';
+                echo '            <button type="button" class="pc-btn pc-btn-secondary" style="padding:4px 6px; font-size:11px;" onclick="pcMoveRow(this, 1)" title="Move Down"><i class="fas fa-chevron-down"></i></button>';
+                echo '            <button type="button" class="pc-btn pc-btn-danger" style="padding:4px 6px; font-size:11px;" onclick="pcDeleteRow(this)" title="Delete Row"><i class="fas fa-trash"></i></button>';
+                echo '          </div>';
+                echo '        </td>';
+                echo '      </tr>';
             }
 
-            echo '    </tbody></table></div>';
+            echo '      </tbody></table>';
+            echo '  </div>';
             echo '</div>';
 
-            echo '<div style="margin-top:20px; text-align:right;">';
-            echo '  <button type="submit" class="pc-btn pc-btn-success" style="padding:10px 24px; font-size:14px;"><i class="fas fa-save"></i> 💾 Save Matrix Specifications</button>';
+            // Bottom Submit Button
+            echo '<div style="margin-top:24px; padding-top:16px; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">';
+            echo '  <a href="' . $moduleLink . '&action=matrices" class="pc-btn pc-btn-secondary"><i class="fas fa-arrow-left"></i> Cancel</a>';
+            echo '  <button type="submit" class="pc-btn pc-btn-success" style="padding:11px 28px; font-size:14.5px; font-weight:800;"><i class="fas fa-save"></i> 💾 Save All Matrix Specifications</button>';
             echo '</div>';
 
             echo '</form>';
             echo '</div>';
+
+            // JavaScript Engine for Pro Matrix Editor
+            $jsonTiers = json_encode($tiers);
+            echo '
+            <script>
+            var pcCurrentTiers = ' . $jsonTiers . ';
+            var pcRowCounter = ' . count($specs) . ';
+            var pcTierCounter = ' . count($tiers) . ';
+
+            // 1. Sync Tier from WHMCS Group Dropdown
+            function pcSyncTierFromGroup(selectEl, tierIdx) {
+                var selectedOpt = selectEl.options[selectEl.selectedIndex];
+                if (!selectedOpt || !selectedOpt.value) return;
+                var groupName = selectedOpt.getAttribute("data-name");
+                var groupLink = selectedOpt.getAttribute("data-link");
+
+                var card = selectEl.closest(".pc-tier-editor-card");
+                if (card) {
+                    var nameInput = card.querySelector(".pc-tier-name");
+                    var linkInput = card.querySelector(".pc-tier-link");
+                    if (nameInput && groupName) nameInput.value = groupName.replace(/\s*\/.*$/, "");
+                    if (linkInput && groupLink) linkInput.value = groupLink;
+                }
+            }
+
+            // 2. Set Quick Value Helper
+            function pcSetCellVal(btn, val) {
+                var container = btn.closest("div").parentElement;
+                var input = container.querySelector(".pc-val-input");
+                if (input) {
+                    input.value = val;
+                    input.focus();
+                }
+            }
+
+            // 3. Move Row Up / Down
+            function pcMoveRow(btn, direction) {
+                var row = btn.closest("tr");
+                if (direction === -1 && row.previousElementSibling) {
+                    row.parentNode.insertBefore(row, row.previousElementSibling);
+                } else if (direction === 1 && row.nextElementSibling) {
+                    row.parentNode.insertBefore(row.nextElementSibling, row);
+                }
+                pcRenumberRows();
+            }
+
+            // 4. Delete Spec Row
+            function pcDeleteRow(btn) {
+                var row = btn.closest("tr");
+                if (confirm("Remove this specification row?")) {
+                    row.remove();
+                    pcRenumberRows();
+                }
+            }
+
+            // 5. Renumber Rows
+            function pcRenumberRows() {
+                var rows = document.querySelectorAll("#pcSpecsTableBody tr");
+                rows.forEach(function(r, idx) {
+                    var numEl = r.querySelector(".pc-row-num");
+                    if (numEl) numEl.innerText = idx + 1;
+                });
+            }
+
+            // 6. Insert Feature from Library Dropdown
+            function pcInsertFromLibrary() {
+                var selectEl = document.getElementById("pcSpecLibrarySelect");
+                if (!selectEl || !selectEl.value) {
+                    alert("Please select a feature from the library dropdown first.");
+                    return;
+                }
+
+                try {
+                    var feat = JSON.parse(selectEl.value);
+                    pcRowCounter++;
+                    var tbody = document.getElementById("pcSpecsTableBody");
+                    var tr = document.createElement("tr");
+                    tr.className = "pc-spec-row-item";
+                    tr.setAttribute("data-row-index", pcRowCounter);
+
+                    var html = "<td style=\"text-align:center; color:#94A3B8; font-weight:700;\"><span class=\"pc-row-num\">" + (tbody.children.length + 1) + "</span></td>";
+                    html += "<td>";
+                    html += "  <input type=\"hidden\" name=\"specs[" + pcRowCounter + "][id]\" value=\"spec_" + Date.now() + "\" class=\"pc-spec-id\">";
+                    html += "  <div style=\"margin-bottom:6px;\"><input type=\"text\" name=\"specs[" + pcRowCounter + "][label]\" value=\"" + feat.label.replace(/"/g, "&quot;") + "\" class=\"pc-input\" style=\"font-weight:700;\" required></div>";
+                    html += "  <div style=\"display:flex; align-items:center; gap:6px;\"><span style=\"font-size:11px; color:#64748B;\"><i class=\"fas fa-icons\"></i> Icon:</span><input type=\"text\" name=\"specs[" + pcRowCounter + "][icon]\" value=\"" + feat.icon + "\" class=\"pc-input\" style=\"font-size:11.5px; padding:4px 8px; height:28px;\"></div>";
+                    html += "</td>";
+                    html += "<td>";
+                    html += "  <textarea name=\"specs[" + pcRowCounter + "][tooltip]\" class=\"pc-input\" rows=\"2\" style=\"font-size:12px; resize:vertical;\">" + feat.tooltip.replace(/"/g, "&quot;") + "</textarea>";
+                    html += "</td>";
+
+                    // Split default values if comma/slash separated
+                    var defVal = feat.def || "yes";
+                    var defParts = defVal.split("/").map(function(s) { return s.trim(); });
+
+                    var tierInputs = document.querySelectorAll(".pc-tier-slug");
+                    tierInputs.forEach(function(tSlugInput, tIdx) {
+                        var tSlug = tSlugInput.value.trim() || ("tier_" + tIdx);
+                        var v = defParts[tIdx] !== undefined ? defParts[tIdx] : (defParts[0] || "");
+
+                        html += "<td class=\"pc-td-tier-" + tSlug + "\" data-tier-id=\"" + tSlug + "\">";
+                        html += "  <div style=\"display:flex; flex-direction:column; gap:6px;\">";
+                        html += "    <input type=\"text\" name=\"specs[" + pcRowCounter + "][values][" + tSlug + "]\" value=\"" + v.replace(/"/g, "&quot;") + "\" class=\"pc-input pc-val-input\">";
+                        html += "    <div style=\"display:flex; gap:3px; flex-wrap:wrap;\">";
+                        html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'yes\')\">✓ Yes</button>";
+                        html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'no\')\">— No</button>";
+                        html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'Shared\')\">Shared</button>";
+                        html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'Dedicated\')\">Dedicated</button>";
+                        html += "    </div>";
+                        html += "  </div>";
+                        html += "</td>";
+                    });
+
+                    html += "<td style=\"text-align:center;\">";
+                    html += "  <div style=\"display:flex; justify-content:center; gap:4px;\">";
+                    html += "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcMoveRow(this, -1)\"><i class=\"fas fa-chevron-up\"></i></button>";
+                    html += "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcMoveRow(this, 1)\"><i class=\"fas fa-chevron-down\"></i></button>";
+                    html += "    <button type=\"button\" class=\"pc-btn pc-btn-danger\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcDeleteRow(this)\"><i class=\"fas fa-trash\"></i></button>";
+                    html += "  </div>";
+                    html += "</td>";
+
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                    pcRenumberRows();
+                    selectEl.selectedIndex = 0;
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+
+            // 7. Add Custom Empty Spec Row
+            function pcAddCustomSpecRow() {
+                pcRowCounter++;
+                var tbody = document.getElementById("pcSpecsTableBody");
+                var tr = document.createElement("tr");
+                tr.className = "pc-spec-row-item";
+                tr.setAttribute("data-row-index", pcRowCounter);
+
+                var html = "<td style=\"text-align:center; color:#94A3B8; font-weight:700;\"><span class=\"pc-row-num\">" + (tbody.children.length + 1) + "</span></td>";
+                html += "<td>";
+                html += "  <input type=\"hidden\" name=\"specs[" + pcRowCounter + "][id]\" value=\"spec_" + Date.now() + "\" class=\"pc-spec-id\">";
+                html += "  <div style=\"margin-bottom:6px;\"><input type=\"text\" name=\"specs[" + pcRowCounter + "][label]\" value=\"\" class=\"pc-input\" style=\"font-weight:700;\" placeholder=\"Feature Name\" required></div>";
+                html += "  <div style=\"display:flex; align-items:center; gap:6px;\"><span style=\"font-size:11px; color:#64748B;\"><i class=\"fas fa-icons\"></i> Icon:</span><input type=\"text\" name=\"specs[" + pcRowCounter + "][icon]\" value=\"fa-check\" class=\"pc-input\" style=\"font-size:11.5px; padding:4px 8px; height:28px;\"></div>";
+                html += "</td>";
+                html += "<td><textarea name=\"specs[" + pcRowCounter + "][tooltip]\" class=\"pc-input\" rows=\"2\" style=\"font-size:12px; resize:vertical;\" placeholder=\"Tooltip explanation\"></textarea></td>";
+
+                var tierInputs = document.querySelectorAll(".pc-tier-slug");
+                tierInputs.forEach(function(tSlugInput, tIdx) {
+                    var tSlug = tSlugInput.value.trim() || ("tier_" + tIdx);
+                    html += "<td class=\"pc-td-tier-" + tSlug + "\" data-tier-id=\"" + tSlug + "\">";
+                    html += "  <div style=\"display:flex; flex-direction:column; gap:6px;\">";
+                    html += "    <input type=\"text\" name=\"specs[" + pcRowCounter + "][values][" + tSlug + "]\" value=\"\" class=\"pc-input pc-val-input\" placeholder=\"Value\">";
+                    html += "    <div style=\"display:flex; gap:3px; flex-wrap:wrap;\">";
+                    html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'yes\')\">✓ Yes</button>";
+                    html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'no\')\">— No</button>";
+                    html += "    </div>";
+                    html += "  </div>";
+                    html += "</td>";
+                });
+
+                html += "<td style=\"text-align:center;\">";
+                html += "  <div style=\"display:flex; justify-content:center; gap:4px;\">";
+                html += "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcMoveRow(this, -1)\"><i class=\"fas fa-chevron-up\"></i></button>";
+                html += "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcMoveRow(this, 1)\"><i class=\"fas fa-chevron-down\"></i></button>";
+                html += "    <button type=\"button\" class=\"pc-btn pc-btn-danger\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcDeleteRow(this)\"><i class=\"fas fa-trash\"></i></button>";
+                html += "  </div>";
+                html += "</td>";
+
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+                pcRenumberRows();
+            }
+
+            // 8. Add New Tier Column
+            function pcAddTierColumn() {
+                pcTierCounter++;
+                var container = document.getElementById("pcTiersContainer");
+                var newSlug = "tier_" + pcTierCounter;
+                var card = document.createElement("div");
+                card.className = "pc-tier-editor-card";
+                card.setAttribute("data-tier-index", pcTierCounter);
+                card.style.cssText = "background:#FFFFFF; border:2px solid #E2E8F0; border-radius:14px; padding:18px; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.03);";
+
+                var cardHtml = "<div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #F1F5F9;\">";
+                cardHtml += "  <span style=\"font-weight:800; font-size:13px; color:#475569;\"><i class=\"fas fa-layer-group\"></i> Tier #" + (container.children.length + 1) + "</span>";
+                cardHtml += "  <button type=\"button\" class=\"pc-btn pc-btn-danger\" style=\"padding:3px 8px; font-size:11px;\" onclick=\"pcRemoveTierColumn(" + pcTierCounter + ")\"><i class=\"fas fa-trash\"></i></button>";
+                cardHtml += "</div>";
+
+                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Tier Slug / ID</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][id]\" value=\"" + newSlug + "\" class=\"pc-input pc-tier-slug\" style=\"font-size:12.5px;\" required></div>";
+                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Tier Title</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][name]\" value=\"New Tier\" class=\"pc-input pc-tier-name\" style=\"font-weight:700; font-size:13.5px;\" required></div>";
+                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Tagline</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][tagline]\" value=\"\" class=\"pc-input\" placeholder=\"e.g. For Small Teams\"></div>";
+                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Pill Badge</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][badge]\" value=\"\" class=\"pc-input pc-tier-badge\" placeholder=\"e.g. BEST VALUE\"></div>";
+                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Badge Color Scheme</label><select name=\"tiers[" + pcTierCounter + "][badge_color]\" class=\"pc-input\"><option value=\"blue\">Royal Blue Pill</option><option value=\"amber\">Amber / Orange Pill</option><option value=\"green\">Emerald Green Pill</option></select></div>";
+                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:12px; background:#F8FAFC; padding:8px 10px; border-radius:6px;\"><label style=\"display:flex; align-items:center; gap:8px; cursor:pointer;\"><input type=\"checkbox\" name=\"tiers[" + pcTierCounter + "][highlight]\" value=\"1\"> <strong style=\"font-size:12.5px; color:#1E293B;\">Highlight Column</strong></label></div>";
+                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Button Text</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][button_text]\" value=\"View Plans\" class=\"pc-input\"></div>";
+                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:0;\"><label class=\"pc-form-label\">Button Target Link</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][button_link]\" value=\"cart.php\" class=\"pc-input pc-tier-link\"></div>";
+
+                card.innerHTML = cardHtml;
+                container.appendChild(card);
+
+                // Add corresponding column header in table
+                var tableHeaderTr = document.querySelector("#pcSpecsTable thead tr");
+                var actionsTh = tableHeaderTr.lastElementChild;
+                var newTh = document.createElement("th");
+                newTh.className = "pc-th-tier-" + newSlug;
+                newTh.style.cssText = "text-align:center; min-width:160px;";
+                newTh.innerText = "New Tier";
+                tableHeaderTr.insertBefore(newTh, actionsTh);
+
+                // Add cells to each row
+                var rows = document.querySelectorAll("#pcSpecsTableBody tr");
+                rows.forEach(function(row) {
+                    var rIdx = row.getAttribute("data-row-index");
+                    var actionsTd = row.lastElementChild;
+                    var newTd = document.createElement("td");
+                    newTd.className = "pc-td-tier-" + newSlug;
+                    newTd.setAttribute("data-tier-id", newSlug);
+                    newTd.innerHTML = "<div style=\"display:flex; flex-direction:column; gap:6px;\">" +
+                                      "  <input type=\"text\" name=\"specs[" + rIdx + "][values][" + newSlug + "]\" value=\"\" class=\"pc-input pc-val-input\" placeholder=\"Value...\">" +
+                                      "  <div style=\"display:flex; gap:3px; flex-wrap:wrap;\">" +
+                                      "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'yes\')\">✓ Yes</button>" +
+                                      "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'no\')\">— No</button>" +
+                                      "  </div>" +
+                                      "</div>";
+                    row.insertBefore(newTd, actionsTd);
+                });
+            }
+
+            // 9. Remove Tier Column
+            function pcRemoveTierColumn(idx) {
+                var card = document.querySelector(".pc-tier-editor-card[data-tier-index=\'" + idx + "\']");
+                if (!card) return;
+                var slugInput = card.querySelector(".pc-tier-slug");
+                var slug = slugInput ? slugInput.value.trim() : "";
+
+                if (confirm("Remove this tier column?")) {
+                    card.remove();
+                    if (slug) {
+                        var th = document.querySelector(".pc-th-tier-" + slug);
+                        if (th) th.remove();
+                        var tds = document.querySelectorAll(".pc-td-tier-" + slug);
+                        tds.forEach(function(td) { td.remove(); });
+                    }
+                }
+            }
+
+            // 10. Load Starter Presets (Hosting vs VPS vs Reseller)
+            function pcLoadStarterPreset(type) {
+                if (!confirm("Load preset? This will refresh tier columns and sample values with the " + type.toUpperCase() + " specification template.")) return;
+
+                if (type === "hosting") {
+                    location.href = "' . $moduleLink . '&action=editor&id=0";
+                }
+            }
+            </script>
+            ';
         }
 
-        // 3. Display Settings
         if ($action === 'display_settings') {
             $status = plancomparison_get_setting('status', 'on');
             $placement = plancomparison_get_setting('placement', 'below_features');
