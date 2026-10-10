@@ -547,6 +547,92 @@ if (!function_exists('plancomparison_output')) {
             gap: 16px;
         }
 
+        
+        /* Sleek In-Module Confirmation Modal */
+        .pc-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.22s ease, visibility 0.22s ease;
+        }
+        .pc-modal-backdrop.pc-modal-open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .pc-modal-card {
+            background: #FFFFFF;
+            border-radius: 18px;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 440px;
+            padding: 28px 24px;
+            text-align: center;
+            transform: scale(0.92) translateY(8px);
+            transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+        .pc-modal-backdrop.pc-modal-open .pc-modal-card {
+            transform: scale(1) translateY(0);
+        }
+        .pc-modal-icon-wrap {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #FEE2E2;
+            color: #EF4444;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        .pc-modal-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #0F172A;
+            margin: 0 0 8px 0;
+        }
+        .pc-modal-desc {
+            font-size: 13.5px;
+            color: #64748B;
+            line-height: 1.5;
+            margin: 0 0 24px 0;
+        }
+        .pc-modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        .pc-modal-actions .pc-btn {
+            flex: 1;
+            padding: 11px 16px;
+            font-size: 13.5px;
+            border-radius: 10px;
+        }
+        @media (max-width: 480px) {
+            .pc-modal-actions {
+                flex-direction: column-reverse;
+            }
+            .pc-modal-card {
+                padding: 22px 18px;
+            }
+        }
+
         /* Mobile Breakpoints */
         @media (max-width: 991px) {
             .pc-editor-top-grid {
@@ -623,11 +709,11 @@ if (!function_exists('plancomparison_output')) {
             echo '      <h3 style="margin:0 0 4px 0; font-size:17px; font-weight:800; color:#0F172A;">Configured Comparison Matrices</h3>';
             echo '      <p style="margin:0; font-size:13px; color:#64748B;">Manage comparison tables rendered across product groups.</p>';
             echo '    </div>';
-            echo '    <a href="' . $moduleLink . '&action=editor&id=0" class="pc-btn pc-btn-primary"><i class="fas fa-plus"></i> + Create New Matrix</a>';
+            echo '    <a href="' . $moduleLink . '&action=editor&id=0" class="pc-btn pc-btn-primary"><i class="fas fa-plus"></i> Create New Matrix</a>';
             echo '  </div>';
 
             if ($matrices->isEmpty()) {
-                echo '<p style="padding:24px; text-align:center; color:#64748B;">No comparison matrices found. Click "+ Create New Matrix" to build one!</p>';
+                echo '<p style="padding:24px; text-align:center; color:#64748B;">No comparison matrices found. Click "Create New Matrix" to build one!</p>';
             } else {
                 echo '<div class="pc-table-responsive"><table class="pc-table-grid">';
                 echo '<thead><tr>';
@@ -660,7 +746,7 @@ if (!function_exists('plancomparison_output')) {
                     echo '  <td style="text-align:center;">' . ($m->enabled ? '<span style="color:#10B981; font-weight:700;"><i class="fas fa-check-circle"></i> Active</span>' : '<span style="color:#94A3B8;">Disabled</span>') . '</td>';
                     echo '  <td style="text-align:center;">';
                     echo '    <a href="' . $moduleLink . '&action=editor&id=' . (int)$m->id . '" class="pc-btn pc-btn-secondary" style="padding:4px 10px; font-size:12px;"><i class="fas fa-edit"></i> Edit</a> ';
-                    echo '    <a href="' . $moduleLink . '&action=delete_matrix&id=' . (int)$m->id . '" class="pc-btn pc-btn-danger" style="padding:4px 8px; font-size:12px;" onclick="return confirm(\'Delete this comparison matrix?\');"><i class="fas fa-trash"></i></a>';
+                    echo '    <button type="button" class="pc-btn pc-btn-danger" style="padding:4px 8px; font-size:12px;" onclick="pcOpenDeleteModal(\'' . $moduleLink . '&action=delete_matrix&id=' . (int)$m->id . '\', \'' . addslashes(plancomparison_h($m->name)) . '\')"><i class="fas fa-trash"></i></button>';
                     echo '  </td>';
                     echo '</tr>';
                 }
@@ -857,5 +943,53 @@ if (!function_exists('plancomparison_output')) {
             echo '  <p style="color:#475569; font-size:13.5px; line-height:1.6;">Bahari Plan & Tier Comparison automatically injects directly into WHMCS Order Forms (Lagom 2, Standard Cart, Supreme, Premium Comparison) using ClientAreaFooterOutput hooks. No template modification is required!</p>';
             echo '</div>';
         }
+
+        // In-Module Custom Delete Confirmation Modal HTML & JS
+        echo '
+        <div id="pcDeleteModal" class="pc-modal-backdrop" onclick="if(event.target === this) pcCloseDeleteModal();">
+            <div class="pc-modal-card">
+                <div class="pc-modal-icon-wrap">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <h3 class="pc-modal-title">Delete Comparison Matrix?</h3>
+                <p class="pc-modal-desc">
+                    Are you sure you want to permanently delete <strong id="pcDeleteMatrixName" style="color:#0F172A;">this matrix</strong>? This action cannot be undone.
+                </p>
+                <div class="pc-modal-actions">
+                    <button type="button" class="pc-btn pc-btn-secondary" onclick="pcCloseDeleteModal()">Cancel</button>
+                    <a id="pcConfirmDeleteBtn" href="#" class="pc-btn pc-btn-danger"><i class="fas fa-trash-alt"></i> Yes, Delete Matrix</a>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        function pcOpenDeleteModal(deleteUrl, matrixName) {
+            var modal = document.getElementById("pcDeleteModal");
+            var confirmBtn = document.getElementById("pcConfirmDeleteBtn");
+            var nameEl = document.getElementById("pcDeleteMatrixName");
+            if (confirmBtn) confirmBtn.href = deleteUrl;
+            if (nameEl) nameEl.textContent = matrixName ? "\"" + matrixName + "\"" : "this matrix";
+            if (modal) {
+                modal.classList.add("pc-modal-open");
+                document.body.style.overflow = "hidden";
+            }
+        }
+
+        function pcCloseDeleteModal() {
+            var modal = document.getElementById("pcDeleteModal");
+            if (modal) {
+                modal.classList.remove("pc-modal-open");
+                document.body.style.overflow = "";
+            }
+        }
+
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") {
+                pcCloseDeleteModal();
+            }
+        });
+        </script>
+        ';
+
     }
 }
