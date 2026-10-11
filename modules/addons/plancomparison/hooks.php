@@ -865,30 +865,18 @@ add_hook('AdminAreaHeaderOutput', 1, function ($vars) {
     (function() {
         function highlightPlanComparisonNav() {
             try {
-                var links = document.querySelectorAll('a[href*="addonmodules.php?module=plancomparison"]');
-                if (links.length > 0) {
-                    links.forEach(function(a) {
-                        a.innerHTML = '<i class="fas fa-layer-group" style="color:#1E60F8; margin-right:6px;"></i> <strong>Bahari Plan & Tier Comparison</strong>';
-                        var li = a.closest("li");
-                        if (li) {
-                            li.classList.add("pc-addon-nav-item");
-                            var parent = li.parentElement;
-                            if (parent && parent.firstElementChild !== li) {
-                                parent.insertBefore(li, parent.firstElementChild);
-                            }
+                // Strictly target ONLY the WHMCS top navigation navbar menu item
+                var navLink = document.getElementById("Menu-Addons-Plancomparison") || document.querySelector(".navbar-collapse a[href='addonmodules.php?module=plancomparison'], ul.left-nav a[href='addonmodules.php?module=plancomparison']");
+                if (navLink) {
+                    navLink.innerHTML = '<i class="fas fa-layer-group" style="color:#1E60F8; margin-right:6px;"></i> <strong>Bahari Plan & Tier Comparison</strong>';
+                    var li = navLink.closest("li");
+                    if (li) {
+                        li.classList.add("pc-addon-nav-item");
+                        var parent = li.parentElement;
+                        if (parent && parent.firstElementChild !== li) {
+                            parent.insertBefore(li, parent.firstElementChild);
                         }
-                    });
-                } else {
-                    var addonMenus = document.querySelectorAll("li.has-dropdown ul, .dropdown-menu");
-                    addonMenus.forEach(function(ul) {
-                        var hasAddonLink = ul.querySelector('a[href*="addonmodules.php"]');
-                        if (hasAddonLink && !ul.querySelector(".pc-addon-injected")) {
-                            var li = document.createElement("li");
-                            li.className = "pc-addon-nav-item pc-addon-injected";
-                            li.innerHTML = '<a href="addonmodules.php?module=plancomparison"><i class="fas fa-layer-group" style="color:#1E60F8; margin-right:6px;"></i> <strong>Bahari Plan & Tier Comparison</strong></a>';
-                            ul.insertBefore(li, ul.firstChild);
-                        }
-                    });
+                    }
                 }
             } catch(e) {}
         }
