@@ -633,6 +633,78 @@ if (!function_exists('plancomparison_output')) {
             }
         }
 
+        
+        /* Drag & Drop Styling */
+        .pc-spec-row-item.pc-row-dragging {
+            opacity: 0.35 !important;
+            background: #EEF2FF !important;
+        }
+        .pc-spec-row-item.pc-drag-over {
+            border-top: 3px solid #2563EB !important;
+            background: #F8FAFC !important;
+        }
+        .pc-drag-handle {
+            cursor: grab;
+            user-select: none;
+            color: #94A3B8;
+            transition: color 0.15s ease;
+        }
+        .pc-drag-handle:hover {
+            color: #2563EB;
+        }
+        .pc-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Sleek Toast Notifications */
+        .pc-toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .pc-toast {
+            background: #0F172A;
+            color: #FFFFFF;
+            padding: 12px 18px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: auto;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pc-toast.pc-toast-show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .pc-toast-success {
+            background: #065F46;
+            border-left: 4px solid #10B981;
+        }
+        .pc-toast-info {
+            background: #1E293B;
+            border-left: 4px solid #2563EB;
+        }
+        .pc-th-badge-preview {
+            display: inline-block;
+            font-size: 9.5px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 999px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
         /* Mobile Breakpoints */
         @media (max-width: 991px) {
             .pc-editor-top-grid {
@@ -919,15 +991,15 @@ if (!function_exists('plancomparison_output')) {
                 echo '      </select>';
                 echo '    </div>';
 
-                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Tier Slug / ID</label><input type="text" name="tiers[' . $idx . '][id]" value="' . plancomparison_h($t['id']) . '" class="pc-input pc-tier-slug" style="font-size:12.5px;" onchange="pcUpdateTierSlug(' . $idx . ', this.value)" required></div>';
-                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Tier Title</label><input type="text" name="tiers[' . $idx . '][name]" value="' . plancomparison_h($t['name']) . '" class="pc-input pc-tier-name" style="font-weight:700; font-size:13.5px;" required></div>';
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Tier Slug / ID</label><input type="text" name="tiers[' . $idx . '][id]" value="' . plancomparison_h($t['id']) . '" class="pc-input pc-tier-slug" style="font-size:12.5px;" onchange="pcLiveSyncTierSlug(this, ' . $idx . ')" required></div>';
+                echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Tier Title</label><input type="text" name="tiers[' . $idx . '][name]" value="' . plancomparison_h($t['name']) . '" class="pc-input pc-tier-name" style="font-weight:700; font-size:13.5px;" oninput="pcLiveSyncTierHeader(this, ' . $idx . ')" required></div>';
                 echo '    <div class="pc-form-group" style="margin-bottom:10px;"><label class="pc-form-label">Tagline / Target Audience</label><input type="text" name="tiers[' . $idx . '][tagline]" value="' . plancomparison_h($t['tagline']) . '" class="pc-input" placeholder="e.g. For Personal Sites"></div>';
 
                 // Badge Presets Dropdown & Input
                 echo '    <div class="pc-form-group" style="margin-bottom:10px;">';
                 echo '      <label class="pc-form-label">Promotional Pill Badge</label>';
                 echo '      <div style="display:flex; gap:6px;">';
-                echo '        <input type="text" name="tiers[' . $idx . '][badge]" value="' . plancomparison_h($t['badge']) . '" class="pc-input pc-tier-badge" placeholder="e.g. MOST POPULAR" style="flex:1;">';
+                echo '        <input type="text" name="tiers[' . $idx . '][badge]" value="' . plancomparison_h($t['badge']) . '" class="pc-input pc-tier-badge" placeholder="e.g. MOST POPULAR" style="flex:1;" oninput="pcLiveSyncTierBadge(this, ' . $idx . ')">';
                 echo '        <select class="pc-input" style="width:130px; font-size:11.5px;" onchange="this.previousElementSibling.value = this.value">';
                 echo '          <option value="">Presets...</option>';
                 echo '          <option value="MOST POPULAR">MOST POPULAR</option>';
@@ -979,7 +1051,7 @@ if (!function_exists('plancomparison_output')) {
                 echo '        </optgroup>';
             }
             echo '      </select>';
-            echo '      <button type="button" class="pc-btn pc-btn-primary" style="font-size:12.5px; padding:8px 14px;" onclick="pcInsertFromLibrary()"><i class="fas fa-plus"></i> + Add from Library</button>';
+            echo '      <button type="button" class="pc-btn pc-btn-primary" style="font-size:12.5px; padding:8px 14px;" onclick="pcInsertFromLibrary()"><i class="fas fa-plus"></i> Add from Library</button>';
             echo '      <button type="button" class="pc-btn pc-btn-secondary" style="font-size:12.5px; padding:8px 12px;" onclick="pcAddCustomSpecRow()"><i class="fas fa-plus-circle"></i> Custom Row</button>';
             echo '    </div>';
             echo '  </div>';
@@ -988,18 +1060,19 @@ if (!function_exists('plancomparison_output')) {
             echo '  <div class="pc-table-responsive" style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; overflow:hidden;">';
             echo '    <table class="pc-table-grid" id="pcSpecsTable">';
             echo '      <thead><tr>';
-            echo '        <th style="width:40px; text-align:center;">#</th>';
+            echo '        <th style="width:50px; text-align:center;"><i class="fas fa-grip-lines" title="Drag rows to reorder"></i></th>';
             echo '        <th style="width:250px;">Specification Label & Icon</th>';
             echo '        <th style="width:220px;">Hover Tooltip (ⓘ)</th>';
             foreach ($tiers as $t) {
-                echo '        <th class="pc-th-tier-' . plancomparison_h($t['id']) . '" style="text-align:center; min-width:160px;">' . plancomparison_h($t['name']) . '</th>';
+                $bText = !empty($t['badge']) ? '<div class="pc-th-badge-preview pc-badge-' . plancomparison_h(!empty($t['badge_color']) ? $t['badge_color'] : 'blue') . '">' . plancomparison_h($t['badge']) . '</div>' : '';
+                echo '        <th class="pc-th-tier-' . plancomparison_h($t['id']) . '" data-tier-id="' . plancomparison_h($t['id']) . '" style="text-align:center; min-width:160px;">' . $bText . '<div class="pc-th-title">' . plancomparison_h($t['name']) . '</div></th>';
             }
             echo '        <th style="width:90px; text-align:center;">Actions</th>';
             echo '      </tr></thead><tbody id="pcSpecsTableBody">';
 
             foreach ($specs as $sIdx => $s) {
                 echo '      <tr class="pc-spec-row-item" data-row-index="' . $sIdx . '">';
-                echo '        <td style="text-align:center; color:#94A3B8; font-weight:700;"><span class="pc-row-num">' . ($sIdx + 1) . '</span></td>';
+                echo '        <td style="text-align:center; vertical-align:middle;" class="pc-drag-handle" title="Drag up or down to reorder"><i class="fas fa-grip-vertical"></i> <span class="pc-row-num" style="font-weight:700; font-size:12px; margin-left:2px;">' . ($sIdx + 1) . '</span></td>';
                 echo '        <td>';
                 echo '          <input type="hidden" name="specs[' . $sIdx . '][id]" value="' . plancomparison_h($s['id']) . '" class="pc-spec-id">';
                 echo '          <div style="margin-bottom:6px;"><input type="text" name="specs[' . $sIdx . '][label]" value="' . plancomparison_h($s['label']) . '" class="pc-input" style="font-weight:700;" placeholder="e.g. RAM Speed" required></div>';
@@ -1053,13 +1126,91 @@ if (!function_exists('plancomparison_output')) {
 
             // JavaScript Engine for Pro Matrix Editor
             $jsonTiers = json_encode($tiers);
-            echo '
+            ?>
             <script>
-            var pcCurrentTiers = ' . $jsonTiers . ';
-            var pcRowCounter = ' . count($specs) . ';
-            var pcTierCounter = ' . count($tiers) . ';
+            var pcCurrentTiers = <?= $jsonTiers ?>;
+            var pcRowCounter = <?= count($specs) ?>;
+            var pcTierCounter = <?= count($tiers) ?>;
 
-            // 1. Sync Tier from WHMCS Group Dropdown
+            // 1. Live Sync Tier Title with Table Column Header
+            function pcLiveSyncTierHeader(inputEl, tierIdx) {
+                var card = inputEl.closest(".pc-tier-editor-card");
+                var slugInput = card.querySelector(".pc-tier-slug");
+                var slug = slugInput ? slugInput.value.trim() : "";
+                var val = inputEl.value.trim() || ("Tier #" + (parseInt(tierIdx) + 1));
+
+                var th = slug ? document.querySelector(".pc-th-tier-" + slug) : null;
+                if (!th) {
+                    var ths = document.querySelectorAll("#pcSpecsTable thead th");
+                    if (ths[3 + parseInt(tierIdx)]) th = ths[3 + parseInt(tierIdx)];
+                }
+                if (th) {
+                    var titleEl = th.querySelector(".pc-th-title");
+                    if (titleEl) {
+                        titleEl.textContent = val;
+                    } else {
+                        th.textContent = val;
+                    }
+                }
+            }
+
+            // 2. Live Sync Tier Pill Badge
+            function pcLiveSyncTierBadge(inputEl, tierIdx) {
+                var card = inputEl.closest(".pc-tier-editor-card");
+                var slugInput = card.querySelector(".pc-tier-slug");
+                var slug = slugInput ? slugInput.value.trim() : "";
+                var val = inputEl ? inputEl.value.trim() : "";
+                var colorSelect = card.querySelector("select[name*='badge_color']");
+                var color = colorSelect ? colorSelect.value : "blue";
+
+                var th = slug ? document.querySelector(".pc-th-tier-" + slug) : null;
+                if (!th) {
+                    var ths = document.querySelectorAll("#pcSpecsTable thead th");
+                    if (ths[3 + parseInt(tierIdx)]) th = ths[3 + parseInt(tierIdx)];
+                }
+                if (th) {
+                    var badgeEl = th.querySelector(".pc-th-badge-preview");
+                    if (val) {
+                        if (!badgeEl) {
+                            badgeEl = document.createElement("div");
+                            th.insertBefore(badgeEl, th.firstChild);
+                        }
+                        badgeEl.className = "pc-th-badge-preview pc-badge-" + color;
+                        badgeEl.textContent = val;
+                    } else if (badgeEl) {
+                        badgeEl.remove();
+                    }
+                }
+            }
+
+            // 3. Live Sync Tier Slug
+            function pcLiveSyncTierSlug(inputEl, tierIdx) {
+                var newSlug = inputEl.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+                inputEl.value = newSlug;
+                var oldSlug = inputEl.getAttribute("data-old-slug") || ("tier_" + tierIdx);
+
+                if (oldSlug && newSlug && oldSlug !== newSlug) {
+                    var th = document.querySelector(".pc-th-tier-" + oldSlug);
+                    if (th) {
+                        th.classList.remove("pc-th-tier-" + oldSlug);
+                        th.classList.add("pc-th-tier-" + newSlug);
+                        th.setAttribute("data-tier-id", newSlug);
+                    }
+                    var tds = document.querySelectorAll(".pc-td-tier-" + oldSlug);
+                    tds.forEach(function(td) {
+                        td.classList.remove("pc-td-tier-" + oldSlug);
+                        td.classList.add("pc-td-tier-" + newSlug);
+                        td.setAttribute("data-tier-id", newSlug);
+                        var valInput = td.querySelector(".pc-val-input");
+                        if (valInput) {
+                            valInput.name = valInput.name.replace(/\[values\]\[[^\]]+\]/, "[values][" + newSlug + "]");
+                        }
+                    });
+                    inputEl.setAttribute("data-old-slug", newSlug);
+                }
+            }
+
+            // 4. Sync Tier from WHMCS Group Dropdown
             function pcSyncTierFromGroup(selectEl, tierIdx) {
                 var selectedOpt = selectEl.options[selectEl.selectedIndex];
                 if (!selectedOpt || !selectedOpt.value) return;
@@ -1070,12 +1221,16 @@ if (!function_exists('plancomparison_output')) {
                 if (card) {
                     var nameInput = card.querySelector(".pc-tier-name");
                     var linkInput = card.querySelector(".pc-tier-link");
-                    if (nameInput && groupName) nameInput.value = groupName.replace(/\s*\/.*$/, "");
+                    if (nameInput && groupName) {
+                        nameInput.value = groupName.replace(/\s*\/.*$/, "");
+                        pcLiveSyncTierHeader(nameInput, tierIdx);
+                    }
                     if (linkInput && groupLink) linkInput.value = groupLink;
+                    pcToast("Tier synchronized with WHMCS Group", "info");
                 }
             }
 
-            // 2. Set Quick Value Helper
+            // 5. Set Quick Value Helper Pills
             function pcSetCellVal(btn, val) {
                 var container = btn.closest("div").parentElement;
                 var input = container.querySelector(".pc-val-input");
@@ -1085,7 +1240,7 @@ if (!function_exists('plancomparison_output')) {
                 }
             }
 
-            // 3. Move Row Up / Down
+            // 6. Move Row Up / Down
             function pcMoveRow(btn, direction) {
                 var row = btn.closest("tr");
                 if (direction === -1 && row.previousElementSibling) {
@@ -1096,16 +1251,27 @@ if (!function_exists('plancomparison_output')) {
                 pcRenumberRows();
             }
 
-            // 4. Delete Spec Row
+            // 7. Delete Spec Row via Custom Modal (NO native confirm)
             function pcDeleteRow(btn) {
                 var row = btn.closest("tr");
-                if (confirm("Remove this specification row?")) {
-                    row.remove();
-                    pcRenumberRows();
-                }
+                var labelInput = row.querySelector("input[name*='[label]']");
+                var labelName = labelInput ? labelInput.value.trim() : "this specification row";
+
+                pcOpenModal({
+                    title: "Remove Specification Row?",
+                    desc: "Are you sure you want to remove <strong>" + (labelName || "this row") + "</strong> from the comparison matrix?",
+                    icon: "fa-trash-alt",
+                    confirmText: "Yes, Remove Row",
+                    confirmClass: "pc-btn-danger",
+                    onConfirm: function() {
+                        row.remove();
+                        pcRenumberRows();
+                        pcToast("Specification row removed", "info");
+                    }
+                });
             }
 
-            // 5. Renumber Rows
+            // 8. Renumber Rows
             function pcRenumberRows() {
                 var rows = document.querySelectorAll("#pcSpecsTableBody tr");
                 rows.forEach(function(r, idx) {
@@ -1114,11 +1280,67 @@ if (!function_exists('plancomparison_output')) {
                 });
             }
 
-            // 6. Insert Feature from Library Dropdown
+            // 9. Drag and Drop Reordering Engine
+            window.pcDraggedRow = null;
+            function pcInitDragAndDrop() {
+                var rows = document.querySelectorAll("#pcSpecsTableBody tr.pc-spec-row-item");
+                rows.forEach(function(row) {
+                    row.setAttribute("draggable", "true");
+
+                    row.ondragstart = function(e) {
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", "");
+                        window.pcDraggedRow = row;
+                        row.classList.add("pc-row-dragging");
+                    };
+
+                    row.ondragend = function() {
+                        row.classList.remove("pc-row-dragging");
+                        window.pcDraggedRow = null;
+                        document.querySelectorAll("#pcSpecsTableBody tr").forEach(function(r) {
+                            r.classList.remove("pc-drag-over");
+                        });
+                        pcRenumberRows();
+                    };
+
+                    row.ondragover = function(e) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        if (window.pcDraggedRow && window.pcDraggedRow !== row) {
+                            row.classList.add("pc-drag-over");
+                        }
+                    };
+
+                    row.ondragleave = function() {
+                        row.classList.remove("pc-drag-over");
+                    };
+
+                    row.ondrop = function(e) {
+                        e.preventDefault();
+                        row.classList.remove("pc-drag-over");
+                        if (window.pcDraggedRow && window.pcDraggedRow !== row) {
+                            var tbody = document.getElementById("pcSpecsTableBody");
+                            var allRows = Array.from(tbody.querySelectorAll("tr.pc-spec-row-item"));
+                            var dragIdx = allRows.indexOf(window.pcDraggedRow);
+                            var dropIdx = allRows.indexOf(row);
+
+                            if (dragIdx < dropIdx) {
+                                row.parentNode.insertBefore(window.pcDraggedRow, row.nextSibling);
+                            } else {
+                                row.parentNode.insertBefore(window.pcDraggedRow, row);
+                            }
+                            pcRenumberRows();
+                            pcToast("Row order updated", "info");
+                        }
+                    };
+                });
+            }
+
+            // 10. Insert Feature from Library Dropdown
             function pcInsertFromLibrary() {
                 var selectEl = document.getElementById("pcSpecLibrarySelect");
                 if (!selectEl || !selectEl.value) {
-                    alert("Please select a feature from the library dropdown first.");
+                    pcToast("Please select a feature from the library dropdown first", "info");
                     return;
                 }
 
@@ -1130,56 +1352,58 @@ if (!function_exists('plancomparison_output')) {
                     tr.className = "pc-spec-row-item";
                     tr.setAttribute("data-row-index", pcRowCounter);
 
-                    var html = "<td style=\"text-align:center; color:#94A3B8; font-weight:700;\"><span class=\"pc-row-num\">" + (tbody.children.length + 1) + "</span></td>";
+                    var html = "<td style='text-align:center; vertical-align:middle;' class='pc-drag-handle' title='Drag up or down to reorder'><i class='fas fa-grip-vertical'></i> <span class='pc-row-num' style='font-weight:700; font-size:12px; margin-left:2px;'>" + (tbody.children.length + 1) + "</span></td>";
                     html += "<td>";
-                    html += "  <input type=\"hidden\" name=\"specs[" + pcRowCounter + "][id]\" value=\"spec_" + Date.now() + "\" class=\"pc-spec-id\">";
-                    html += "  <div style=\"margin-bottom:6px;\"><input type=\"text\" name=\"specs[" + pcRowCounter + "][label]\" value=\"" + feat.label.replace(/"/g, "&quot;") + "\" class=\"pc-input\" style=\"font-weight:700;\" required></div>";
-                    html += "  <div style=\"display:flex; align-items:center; gap:6px;\"><span style=\"font-size:11px; color:#64748B;\"><i class=\"fas fa-icons\"></i> Icon:</span><input type=\"text\" name=\"specs[" + pcRowCounter + "][icon]\" value=\"" + feat.icon + "\" class=\"pc-input\" style=\"font-size:11.5px; padding:4px 8px; height:28px;\"></div>";
+                    html += "  <input type='hidden' name='specs[" + pcRowCounter + "][id]' value='spec_" + Date.now() + "' class='pc-spec-id'>";
+                    html += "  <div style='margin-bottom:6px;'><input type='text' name='specs[" + pcRowCounter + "][label]' value='" + feat.label.replace(/"/g, "&quot;") + "' class='pc-input' style='font-weight:700;' required></div>";
+                    html += "  <div style='display:flex; align-items:center; gap:6px;'><span style='font-size:11px; color:#64748B;'><i class='fas fa-icons'></i> Icon:</span><input type='text' name='specs[" + pcRowCounter + "][icon]' value='" + feat.icon + "' class='pc-input' style='font-size:11.5px; padding:4px 8px; height:28px;'></div>";
                     html += "</td>";
                     html += "<td>";
-                    html += "  <textarea name=\"specs[" + pcRowCounter + "][tooltip]\" class=\"pc-input\" rows=\"2\" style=\"font-size:12px; resize:vertical;\">" + feat.tooltip.replace(/"/g, "&quot;") + "</textarea>";
+                    html += "  <textarea name='specs[" + pcRowCounter + "][tooltip]' class='pc-input' rows='2' style='font-size:12px; resize:vertical;'>" + feat.tooltip.replace(/"/g, "&quot;") + "</textarea>";
                     html += "</td>";
 
-                    // Split default values if comma/slash separated
                     var defVal = feat.def || "yes";
                     var defParts = defVal.split("/").map(function(s) { return s.trim(); });
 
-                    var tierInputs = document.querySelectorAll(".pc-tier-slug");
-                    tierInputs.forEach(function(tSlugInput, tIdx) {
-                        var tSlug = tSlugInput.value.trim() || ("tier_" + tIdx);
+                    var tierCards = document.querySelectorAll(".pc-tier-editor-card");
+                    tierCards.forEach(function(card, tIdx) {
+                        var slugInput = card.querySelector(".pc-tier-slug");
+                        var tSlug = slugInput ? slugInput.value.trim() : ("tier_" + tIdx);
                         var v = defParts[tIdx] !== undefined ? defParts[tIdx] : (defParts[0] || "");
 
-                        html += "<td class=\"pc-td-tier-" + tSlug + "\" data-tier-id=\"" + tSlug + "\">";
-                        html += "  <div style=\"display:flex; flex-direction:column; gap:6px;\">";
-                        html += "    <input type=\"text\" name=\"specs[" + pcRowCounter + "][values][" + tSlug + "]\" value=\"" + v.replace(/"/g, "&quot;") + "\" class=\"pc-input pc-val-input\">";
-                        html += "    <div style=\"display:flex; gap:3px; flex-wrap:wrap;\">";
-                        html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'yes\')\">✓ Yes</button>";
-                        html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'no\')\">— No</button>";
-                        html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'Shared\')\">Shared</button>";
-                        html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'Dedicated\')\">Dedicated</button>";
+                        html += "<td class='pc-td-tier-" + tSlug + "' data-tier-id='" + tSlug + "'>";
+                        html += "  <div style='display:flex; flex-direction:column; gap:6px;'>";
+                        html += "    <input type='text' name='specs[" + pcRowCounter + "][values][" + tSlug + "]' value='" + v.replace(/"/g, "&quot;") + "' class='pc-input pc-val-input'>";
+                        html += "    <div style='display:flex; gap:3px; flex-wrap:wrap;'>";
+                        html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "yes")'>✓ Yes</button>";
+                        html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "no")'>— No</button>";
+                        html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "Shared")'>Shared</button>";
+                        html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "Dedicated")'>Dedicated</button>";
                         html += "    </div>";
                         html += "  </div>";
                         html += "</td>";
                     });
 
-                    html += "<td style=\"text-align:center;\">";
-                    html += "  <div style=\"display:flex; justify-content:center; gap:4px;\">";
-                    html += "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcMoveRow(this, -1)\"><i class=\"fas fa-chevron-up\"></i></button>";
-                    html += "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcMoveRow(this, 1)\"><i class=\"fas fa-chevron-down\"></i></button>";
-                    html += "    <button type=\"button\" class=\"pc-btn pc-btn-danger\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcDeleteRow(this)\"><i class=\"fas fa-trash\"></i></button>";
+                    html += "<td style='text-align:center;'>";
+                    html += "  <div style='display:flex; justify-content:center; gap:4px;'>";
+                    html += "    <button type='button' class='pc-btn pc-btn-secondary' style='padding:4px 6px; font-size:11px;' onclick='pcMoveRow(this, -1)' title='Move Up'><i class='fas fa-chevron-up'></i></button>";
+                    html += "    <button type='button' class='pc-btn pc-btn-secondary' style='padding:4px 6px; font-size:11px;' onclick='pcMoveRow(this, 1)' title='Move Down'><i class='fas fa-chevron-down'></i></button>";
+                    html += "    <button type='button' class='pc-btn pc-btn-danger' style='padding:4px 6px; font-size:11px;' onclick='pcDeleteRow(this)' title='Delete Row'><i class='fas fa-trash'></i></button>";
                     html += "  </div>";
                     html += "</td>";
 
                     tr.innerHTML = html;
                     tbody.appendChild(tr);
                     pcRenumberRows();
+                    pcInitDragAndDrop();
                     selectEl.selectedIndex = 0;
+                    pcToast("✓ Added '" + feat.label + "' to matrix", "success");
                 } catch(e) {
                     console.error(e);
                 }
             }
 
-            // 7. Add Custom Empty Spec Row
+            // 11. Add Custom Empty Spec Row
             function pcAddCustomSpecRow() {
                 pcRowCounter++;
                 var tbody = document.getElementById("pcSpecsTableBody");
@@ -1187,42 +1411,45 @@ if (!function_exists('plancomparison_output')) {
                 tr.className = "pc-spec-row-item";
                 tr.setAttribute("data-row-index", pcRowCounter);
 
-                var html = "<td style=\"text-align:center; color:#94A3B8; font-weight:700;\"><span class=\"pc-row-num\">" + (tbody.children.length + 1) + "</span></td>";
+                var html = "<td style='text-align:center; vertical-align:middle;' class='pc-drag-handle' title='Drag up or down to reorder'><i class='fas fa-grip-vertical'></i> <span class='pc-row-num' style='font-weight:700; font-size:12px; margin-left:2px;'>" + (tbody.children.length + 1) + "</span></td>";
                 html += "<td>";
-                html += "  <input type=\"hidden\" name=\"specs[" + pcRowCounter + "][id]\" value=\"spec_" + Date.now() + "\" class=\"pc-spec-id\">";
-                html += "  <div style=\"margin-bottom:6px;\"><input type=\"text\" name=\"specs[" + pcRowCounter + "][label]\" value=\"\" class=\"pc-input\" style=\"font-weight:700;\" placeholder=\"Feature Name\" required></div>";
-                html += "  <div style=\"display:flex; align-items:center; gap:6px;\"><span style=\"font-size:11px; color:#64748B;\"><i class=\"fas fa-icons\"></i> Icon:</span><input type=\"text\" name=\"specs[" + pcRowCounter + "][icon]\" value=\"fa-check\" class=\"pc-input\" style=\"font-size:11.5px; padding:4px 8px; height:28px;\"></div>";
+                html += "  <input type='hidden' name='specs[" + pcRowCounter + "][id]' value='spec_" + Date.now() + "' class='pc-spec-id'>";
+                html += "  <div style='margin-bottom:6px;'><input type='text' name='specs[" + pcRowCounter + "][label]' value='' class='pc-input' style='font-weight:700;' placeholder='Feature Name' required></div>";
+                html += "  <div style='display:flex; align-items:center; gap:6px;'><span style='font-size:11px; color:#64748B;'><i class='fas fa-icons'></i> Icon:</span><input type='text' name='specs[" + pcRowCounter + "][icon]' value='fa-check' class='pc-input' style='font-size:11.5px; padding:4px 8px; height:28px;'></div>";
                 html += "</td>";
-                html += "<td><textarea name=\"specs[" + pcRowCounter + "][tooltip]\" class=\"pc-input\" rows=\"2\" style=\"font-size:12px; resize:vertical;\" placeholder=\"Tooltip explanation\"></textarea></td>";
+                html += "<td><textarea name='specs[" + pcRowCounter + "][tooltip]' class='pc-input' rows='2' style='font-size:12px; resize:vertical;' placeholder='Tooltip explanation'></textarea></td>";
 
-                var tierInputs = document.querySelectorAll(".pc-tier-slug");
-                tierInputs.forEach(function(tSlugInput, tIdx) {
-                    var tSlug = tSlugInput.value.trim() || ("tier_" + tIdx);
-                    html += "<td class=\"pc-td-tier-" + tSlug + "\" data-tier-id=\"" + tSlug + "\">";
-                    html += "  <div style=\"display:flex; flex-direction:column; gap:6px;\">";
-                    html += "    <input type=\"text\" name=\"specs[" + pcRowCounter + "][values][" + tSlug + "]\" value=\"\" class=\"pc-input pc-val-input\" placeholder=\"Value\">";
-                    html += "    <div style=\"display:flex; gap:3px; flex-wrap:wrap;\">";
-                    html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'yes\')\">✓ Yes</button>";
-                    html += "      <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'no\')\">— No</button>";
+                var tierCards = document.querySelectorAll(".pc-tier-editor-card");
+                tierCards.forEach(function(card, tIdx) {
+                    var slugInput = card.querySelector(".pc-tier-slug");
+                    var tSlug = slugInput ? slugInput.value.trim() : ("tier_" + tIdx);
+                    html += "<td class='pc-td-tier-" + tSlug + "' data-tier-id='" + tSlug + "'>";
+                    html += "  <div style='display:flex; flex-direction:column; gap:6px;'>";
+                    html += "    <input type='text' name='specs[" + pcRowCounter + "][values][" + tSlug + "]' value='' class='pc-input pc-val-input' placeholder='Value'>";
+                    html += "    <div style='display:flex; gap:3px; flex-wrap:wrap;'>";
+                    html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "yes")'>✓ Yes</button>";
+                    html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "no")'>— No</button>";
                     html += "    </div>";
                     html += "  </div>";
                     html += "</td>";
                 });
 
-                html += "<td style=\"text-align:center;\">";
-                html += "  <div style=\"display:flex; justify-content:center; gap:4px;\">";
-                html += "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcMoveRow(this, -1)\"><i class=\"fas fa-chevron-up\"></i></button>";
-                html += "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcMoveRow(this, 1)\"><i class=\"fas fa-chevron-down\"></i></button>";
-                html += "    <button type=\"button\" class=\"pc-btn pc-btn-danger\" style=\"padding:4px 6px; font-size:11px;\" onclick=\"pcDeleteRow(this)\"><i class=\"fas fa-trash\"></i></button>";
+                html += "<td style='text-align:center;'>";
+                html += "  <div style='display:flex; justify-content:center; gap:4px;'>";
+                html += "    <button type='button' class='pc-btn pc-btn-secondary' style='padding:4px 6px; font-size:11px;' onclick='pcMoveRow(this, -1)' title='Move Up'><i class='fas fa-chevron-up'></i></button>";
+                html += "    <button type='button' class='pc-btn pc-btn-secondary' style='padding:4px 6px; font-size:11px;' onclick='pcMoveRow(this, 1)' title='Move Down'><i class='fas fa-chevron-down'></i></button>";
+                html += "    <button type='button' class='pc-btn pc-btn-danger' style='padding:4px 6px; font-size:11px;' onclick='pcDeleteRow(this)' title='Delete Row'><i class='fas fa-trash'></i></button>";
                 html += "  </div>";
                 html += "</td>";
 
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
                 pcRenumberRows();
+                pcInitDragAndDrop();
+                pcToast("New custom specification row added", "info");
             }
 
-            // 8. Add New Tier Column
+            // 12. Add New Tier Column
             function pcAddTierColumn() {
                 pcTierCounter++;
                 var container = document.getElementById("pcTiersContainer");
@@ -1232,79 +1459,268 @@ if (!function_exists('plancomparison_output')) {
                 card.setAttribute("data-tier-index", pcTierCounter);
                 card.style.cssText = "background:#FFFFFF; border:2px solid #E2E8F0; border-radius:14px; padding:18px; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.03);";
 
-                var cardHtml = "<div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #F1F5F9;\">";
-                cardHtml += "  <span style=\"font-weight:800; font-size:13px; color:#475569;\"><i class=\"fas fa-layer-group\"></i> Tier #" + (container.children.length + 1) + "</span>";
-                cardHtml += "  <button type=\"button\" class=\"pc-btn pc-btn-danger\" style=\"padding:3px 8px; font-size:11px;\" onclick=\"pcRemoveTierColumn(" + pcTierCounter + ")\"><i class=\"fas fa-trash\"></i></button>";
+                var cardHtml = "<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #F1F5F9;'>";
+                cardHtml += "  <span style='font-weight:800; font-size:13px; color:#475569;'><i class='fas fa-layer-group'></i> Tier #" + (container.children.length + 1) + "</span>";
+                cardHtml += "  <button type='button' class='pc-btn pc-btn-danger' style='padding:3px 8px; font-size:11px;' onclick='pcRemoveTierColumn(" + pcTierCounter + ")' title='Remove Tier'><i class='fas fa-trash'></i></button>";
                 cardHtml += "</div>";
 
-                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Tier Slug / ID</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][id]\" value=\"" + newSlug + "\" class=\"pc-input pc-tier-slug\" style=\"font-size:12.5px;\" required></div>";
-                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Tier Title</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][name]\" value=\"New Tier\" class=\"pc-input pc-tier-name\" style=\"font-weight:700; font-size:13.5px;\" required></div>";
-                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Tagline</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][tagline]\" value=\"\" class=\"pc-input\" placeholder=\"e.g. For Small Teams\"></div>";
-                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Pill Badge</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][badge]\" value=\"\" class=\"pc-input pc-tier-badge\" placeholder=\"e.g. BEST VALUE\"></div>";
-                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Badge Color Scheme</label><select name=\"tiers[" + pcTierCounter + "][badge_color]\" class=\"pc-input\"><option value=\"blue\">Royal Blue Pill</option><option value=\"amber\">Amber / Orange Pill</option><option value=\"green\">Emerald Green Pill</option></select></div>";
-                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:12px; background:#F8FAFC; padding:8px 10px; border-radius:6px;\"><label style=\"display:flex; align-items:center; gap:8px; cursor:pointer;\"><input type=\"checkbox\" name=\"tiers[" + pcTierCounter + "][highlight]\" value=\"1\"> <strong style=\"font-size:12.5px; color:#1E293B;\">Highlight Column</strong></label></div>";
-                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:10px;\"><label class=\"pc-form-label\">Button Text</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][button_text]\" value=\"View Plans\" class=\"pc-input\"></div>";
-                cardHtml += "<div class=\"pc-form-group\" style=\"margin-bottom:0;\"><label class=\"pc-form-label\">Button Target Link</label><input type=\"text\" name=\"tiers[" + pcTierCounter + "][button_link]\" value=\"cart.php\" class=\"pc-input pc-tier-link\"></div>";
+                cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Tier Slug / ID</label><input type='text' name='tiers[" + pcTierCounter + "][id]' value='" + newSlug + "' class='pc-input pc-tier-slug' style='font-size:12.5px;' onchange='pcLiveSyncTierSlug(this, " + pcTierCounter + ")' required></div>";
+                cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Tier Title</label><input type='text' name='tiers[" + pcTierCounter + "][name]' value='New Tier' class='pc-input pc-tier-name' style='font-weight:700; font-size:13.5px;' oninput='pcLiveSyncTierHeader(this, " + pcTierCounter + ")' required></div>";
+                cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Tagline</label><input type='text' name='tiers[" + pcTierCounter + "][tagline]' value='' class='pc-input' placeholder='e.g. For Small Teams'></div>";
+                cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Pill Badge</label><input type='text' name='tiers[" + pcTierCounter + "][badge]' value='' class='pc-input pc-tier-badge' placeholder='e.g. BEST VALUE' oninput='pcLiveSyncTierBadge(this, " + pcTierCounter + ")'></div>";
+                cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Badge Color Scheme</label><select name='tiers[" + pcTierCounter + "][badge_color]' class='pc-input' onchange='pcLiveSyncTierBadge(this.closest(".pc-tier-editor-card").querySelector(".pc-tier-badge"), " + pcTierCounter + ")'><option value='blue'>Royal Blue Pill</option><option value='amber'>Amber / Orange Pill</option><option value='green'>Emerald Green Pill</option></select></div>";
+                cardHtml += "<div class='pc-form-group' style='margin-bottom:12px; background:#F8FAFC; padding:8px 10px; border-radius:6px;'><label style='display:flex; align-items:center; gap:8px; cursor:pointer;'><input type='checkbox' name='tiers[" + pcTierCounter + "][highlight]' value='1' onchange='this.closest(".pc-tier-editor-card").style.borderColor = this.checked ? "#2563EB" : "#E2E8F0"'> <strong style='font-size:12.5px; color:#1E293B;'>Highlight Column</strong></label></div>";
+                cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Button Text</label><input type='text' name='tiers[" + pcTierCounter + "][button_text]' value='View Plans' class='pc-input'></div>";
+                cardHtml += "<div class='pc-form-group' style='margin-bottom:0;'><label class='pc-form-label'>Button Target Link</label><input type='text' name='tiers[" + pcTierCounter + "][button_link]' value='cart.php' class='pc-input pc-tier-link'></div>";
 
                 card.innerHTML = cardHtml;
                 container.appendChild(card);
 
-                // Add corresponding column header in table
                 var tableHeaderTr = document.querySelector("#pcSpecsTable thead tr");
                 var actionsTh = tableHeaderTr.lastElementChild;
                 var newTh = document.createElement("th");
                 newTh.className = "pc-th-tier-" + newSlug;
+                newTh.setAttribute("data-tier-id", newSlug);
                 newTh.style.cssText = "text-align:center; min-width:160px;";
-                newTh.innerText = "New Tier";
+                newTh.innerHTML = "<div class='pc-th-title'>New Tier</div>";
                 tableHeaderTr.insertBefore(newTh, actionsTh);
 
-                // Add cells to each row
                 var rows = document.querySelectorAll("#pcSpecsTableBody tr");
-                rows.forEach(function(row) {
-                    var rIdx = row.getAttribute("data-row-index");
-                    var actionsTd = row.lastElementChild;
+                rows.forEach(function(r) {
+                    var rIdx = r.getAttribute("data-row-index");
+                    var actionsTd = r.lastElementChild;
                     var newTd = document.createElement("td");
                     newTd.className = "pc-td-tier-" + newSlug;
                     newTd.setAttribute("data-tier-id", newSlug);
-                    newTd.innerHTML = "<div style=\"display:flex; flex-direction:column; gap:6px;\">" +
-                                      "  <input type=\"text\" name=\"specs[" + rIdx + "][values][" + newSlug + "]\" value=\"\" class=\"pc-input pc-val-input\" placeholder=\"Value...\">" +
-                                      "  <div style=\"display:flex; gap:3px; flex-wrap:wrap;\">" +
-                                      "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'yes\')\">✓ Yes</button>" +
-                                      "    <button type=\"button\" class=\"pc-btn pc-btn-secondary\" style=\"padding:2px 5px; font-size:10px; border-radius:4px;\" onclick=\"pcSetCellVal(this, \'no\')\">— No</button>" +
-                                      "  </div>" +
-                                      "</div>";
-                    row.insertBefore(newTd, actionsTd);
+                    newTd.innerHTML = "<div style='display:flex; flex-direction:column; gap:6px;'><input type='text' name='specs[" + rIdx + "][values][" + newSlug + "]' value='' class='pc-input pc-val-input' placeholder='Value...'><div style='display:flex; gap:3px; flex-wrap:wrap;'><button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "yes")'>✓ Yes</button><button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "no")'>— No</button></div></div>";
+                    r.insertBefore(newTd, actionsTd);
+                });
+
+                pcToast("Added new tier column: New Tier", "success");
+            }
+
+            // 13. Remove Tier Column via Custom Modal (NO native confirm)
+            function pcRemoveTierColumn(idx) {
+                var card = document.querySelector(".pc-tier-editor-card[data-tier-index='" + idx + "']");
+                if (!card) return;
+                var slugInput = card.querySelector(".pc-tier-slug");
+                var nameInput = card.querySelector(".pc-tier-name");
+                var slug = slugInput ? slugInput.value.trim() : "";
+                var tierName = nameInput ? nameInput.value.trim() : "this tier";
+
+                pcOpenModal({
+                    title: "Remove Tier Column?",
+                    desc: "Are you sure you want to remove <strong>" + (tierName || "this tier column") + "</strong>? All specification values in this column will be deleted.",
+                    icon: "fa-columns",
+                    confirmText: "Yes, Remove Tier",
+                    confirmClass: "pc-btn-danger",
+                    onConfirm: function() {
+                        card.remove();
+                        if (slug) {
+                            var th = document.querySelector(".pc-th-tier-" + slug);
+                            if (th) th.remove();
+                            var tds = document.querySelectorAll(".pc-td-tier-" + slug);
+                            tds.forEach(function(td) { td.remove(); });
+                        }
+                        pcToast("Tier column removed", "info");
+                    }
                 });
             }
 
-            // 9. Remove Tier Column
-            function pcRemoveTierColumn(idx) {
-                var card = document.querySelector(".pc-tier-editor-card[data-tier-index=\'" + idx + "\']");
-                if (!card) return;
-                var slugInput = card.querySelector(".pc-tier-slug");
-                var slug = slugInput ? slugInput.value.trim() : "";
-
-                if (confirm("Remove this tier column?")) {
-                    card.remove();
-                    if (slug) {
-                        var th = document.querySelector(".pc-th-tier-" + slug);
-                        if (th) th.remove();
-                        var tds = document.querySelectorAll(".pc-td-tier-" + slug);
-                        tds.forEach(function(td) { td.remove(); });
-                    }
+            // 14. Load Starter Presets via Custom Modal & Apply Dynamic Data
+            var pcPresetDefinitions = {
+                hosting: {
+                    name: "Web Hosting Plans (Budget vs Pro vs Turbo)",
+                    title: "⚡ KEY SPECS",
+                    subtitle: "Compare hardware capabilities across all tiers.",
+                    tiers: [
+                        { id: "budget", name: "Budget", tagline: "For Personal Sites", badge: "", badge_color: "blue", highlight: 0, button_text: "View Plans", button_link: "cart.php?gid=2" },
+                        { id: "pro", name: "Pro", tagline: "For Growing Business", badge: "MOST POPULAR", badge_color: "blue", highlight: 1, button_text: "View Plans", button_link: "cart.php?gid=3" },
+                        { id: "turbo", name: "Turbo", tagline: "For High Traffic", badge: "ULTIMATE POWER", badge_color: "amber", highlight: 0, button_text: "View Plans", button_link: "cart.php?gid=20" }
+                    ],
+                    specs: [
+                        { id: "spec_cpu", label: "Processor Architecture", icon: "fa-microchip", tooltip: "Server CPU generation, core clock and architecture", values: { budget: "Intel XEON", pro: "Ryzen 9 (4.5Ghz)", turbo: "Ryzen 9 (5.7Ghz)" } },
+                        { id: "spec_ram", label: "Memory Speed", icon: "fa-memory", tooltip: "Memory technology and bus frequency", values: { budget: "DDR4 2400Mhz", pro: "DDR4 3200Mhz", turbo: "DDR5 6000Mhz" } },
+                        { id: "spec_storage", label: "NVMe Storage Tech", icon: "fa-hdd", tooltip: "Enterprise ultra-fast NVMe storage generation", values: { budget: "NVMe Gen3", pro: "NVMe Gen4", turbo: "NVMe Gen5" } },
+                        { id: "spec_res", label: "Computing Resources", icon: "fa-server", tooltip: "Guaranteed CPU & RAM allocation model", values: { budget: "Shared CPU/RAM", pro: "Shared CPU/RAM", turbo: "Dedicated Resources" } },
+                        { id: "spec_ls", label: "LiteSpeed Enterprise Server", icon: "fa-bolt", tooltip: "High performance web server with LSCache built-in", values: { budget: "yes", pro: "yes", turbo: "yes" } },
+                        { id: "spec_lb", label: "Traffic Load Balancer", icon: "fa-shield-alt", tooltip: "Automated high availability traffic distribution", values: { budget: "no", pro: "no", turbo: "yes" } },
+                        { id: "spec_net", label: "Network Bandwidth Uplink", icon: "fa-network-wired", tooltip: "Server uplink port connection speed", values: { budget: "500 Mbps", pro: "1 Gbps", turbo: "10 Gbps" } },
+                        { id: "spec_backup", label: "Automated Cloud Backups", icon: "fa-history", tooltip: "Automated snapshot retention frequency", values: { budget: "Weekly", pro: "Daily (7 Days)", turbo: "Continuous CDP" } }
+                    ]
+                },
+                vps: {
+                    name: "BDIX High-Performance VPS (Starter vs Business vs Enterprise)",
+                    title: "🚀 CLOUD VPS SPECS",
+                    subtitle: "Ultra-low latency BDIX connected Virtual Private Servers.",
+                    tiers: [
+                        { id: "vps_starter", name: "Starter VPS", tagline: "Standard Compute", badge: "", badge_color: "blue", highlight: 0, button_text: "Configure VPS", button_link: "cart.php?gid=5" },
+                        { id: "vps_biz", name: "Business Cloud", tagline: "High Performance", badge: "MOST POPULAR", badge_color: "blue", highlight: 1, button_text: "Configure VPS", button_link: "cart.php?gid=6" },
+                        { id: "vps_ent", name: "Enterprise Turbo", tagline: "Maximum Power", badge: "ULTIMATE PERFORMANCE", badge_color: "amber", highlight: 0, button_text: "Configure VPS", button_link: "cart.php?gid=7" }
+                    ],
+                    specs: [
+                        { id: "vps_vcpu", label: "vCPU Compute Cores", icon: "fa-microchip", tooltip: "Dedicated virtual CPU core count", values: { vps_starter: "2 vCPU Cores", vps_biz: "4 vCPU Cores", vps_ent: "8 Dedicated vCPUs" } },
+                        { id: "vps_ram", label: "ECC DDR RAM", icon: "fa-memory", tooltip: "Dedicated high-speed ECC memory", values: { vps_starter: "4 GB DDR4 ECC", vps_biz: "8 GB DDR4 ECC", vps_ent: "16 GB DDR5 ECC" } },
+                        { id: "vps_nvme", label: "Enterprise NVMe Disk", icon: "fa-hdd", tooltip: "PCIe Gen4 enterprise grade high IOPS storage", values: { vps_starter: "50 GB PCIe Gen4", vps_biz: "100 GB PCIe Gen4", vps_ent: "250 GB Enterprise NVMe" } },
+                        { id: "vps_bw", label: "Monthly Data Transfer", icon: "fa-exchange-alt", tooltip: "Monthly traffic bandwidth allocation", values: { vps_starter: "2 TB Bandwidth", vps_biz: "5 TB Bandwidth", vps_ent: "Unlimited High-Speed" } },
+                        { id: "vps_bdix", label: "BDIX Route & Peering", icon: "fa-route", tooltip: "Direct low latency Bangladesh peering connection", values: { vps_starter: "yes", vps_biz: "yes", vps_ent: "yes" } },
+                        { id: "vps_ip", label: "Dedicated IPv4", icon: "fa-network-wired", tooltip: "Dedicated clean IP address assigned to VPS", values: { vps_starter: "1 Dedicated IP", vps_biz: "1 Dedicated IP", vps_ent: "2 Dedicated IPs" } },
+                        { id: "vps_root", label: "Full Root & VNC Access", icon: "fa-terminal", tooltip: "Complete administrative control over OS", values: { vps_starter: "yes", vps_biz: "yes", vps_ent: "yes" } },
+                        { id: "vps_ddos", label: "Anti-DDoS Protection", icon: "fa-shield-virus", tooltip: "Layer 4 & Layer 7 volumetric mitigation", values: { vps_starter: "20 Gbps Standard", vps_biz: "100 Gbps Guard", vps_ent: "Bahari Shield 1 Tbps" } }
+                    ]
+                },
+                reseller: {
+                    name: "Reseller Hosting Tiers (Silver vs Gold vs Platinum)",
+                    title: "💼 RESELLER SPECS",
+                    subtitle: "Launch your own web hosting business with white-label infrastructure.",
+                    tiers: [
+                        { id: "res_silver", name: "Silver Reseller", tagline: "For Startups", badge: "", badge_color: "blue", highlight: 0, button_text: "Order Reseller", button_link: "cart.php?gid=10" },
+                        { id: "res_gold", name: "Gold Reseller", tagline: "Most Popular Choice", badge: "BEST VALUE", badge_color: "blue", highlight: 1, button_text: "Order Reseller", button_link: "cart.php?gid=11" },
+                        { id: "res_plat", name: "Platinum Reseller", tagline: "Large Agency Scale", badge: "UNLIMITED POWER", badge_color: "amber", highlight: 0, button_text: "Order Reseller", button_link: "cart.php?gid=12" }
+                    ],
+                    specs: [
+                        { id: "res_cpanel", label: "cPanel Accounts", icon: "fa-users-cog", tooltip: "Maximum number of separate cPanel client accounts", values: { res_silver: "25 Accounts", res_gold: "50 Accounts", res_plat: "100 Accounts" } },
+                        { id: "res_storage", label: "NVMe SSD Storage", icon: "fa-hdd", tooltip: "Shared high-speed storage quota for all clients", values: { res_silver: "50 GB NVMe", res_gold: "100 GB NVMe", res_plat: "250 GB NVMe" } },
+                        { id: "res_bw", label: "Monthly Bandwidth", icon: "fa-exchange-alt", tooltip: "Cumulative network transfer per month", values: { res_silver: "1 TB Bandwidth", res_gold: "2.5 TB Bandwidth", res_plat: "5 TB Bandwidth" } },
+                        { id: "res_whmcs", label: "Free WHMCS License", icon: "fa-receipt", tooltip: "Automated billing software license included", values: { res_silver: "no", res_gold: "yes", res_plat: "yes" } },
+                        { id: "res_ns", label: "Private Nameservers", icon: "fa-globe", tooltip: "Custom branded ns1/ns2.yourdomain.com", values: { res_silver: "yes", res_gold: "yes", res_plat: "yes" } },
+                        { id: "res_backup", label: "Automated JetBackup", icon: "fa-history", tooltip: "Multi-point backup retention for all sub-accounts", values: { res_silver: "Weekly", res_gold: "Daily JetBackup", res_plat: "Daily + Offsite Cloud" } },
+                        { id: "res_over", label: "Overselling Enabled", icon: "fa-toggle-on", tooltip: "Allocate more resources than actual usage", values: { res_silver: "yes", res_gold: "yes", res_plat: "yes" } },
+                        { id: "res_mig", label: "Free Client Migration", icon: "fa-dolly", tooltip: "Assisted account transfers from your previous provider", values: { res_silver: "yes", res_gold: "yes", res_plat: "yes" } }
+                    ]
                 }
-            }
+            };
 
-            // 10. Load Starter Presets (Hosting vs VPS vs Reseller)
             function pcLoadStarterPreset(type) {
-                if (!confirm("Load preset? This will refresh tier columns and sample values with the " + type.toUpperCase() + " specification template.")) return;
+                var preset = pcPresetDefinitions[type];
+                if (!preset) return;
 
-                if (type === "hosting") {
-                    location.href = "' . $moduleLink . '&action=editor&id=0";
-                }
+                var typeLabel = type === "hosting" ? "Web Hosting" : (type === "vps" ? "BDIX VPS" : "Reseller Hosting");
+
+                pcOpenModal({
+                    title: "Load " + typeLabel + " Preset?",
+                    desc: "This will instantly populate the editor with the <strong>" + preset.name + "</strong> configuration (tiers, specification rows, tooltips, and values).",
+                    icon: "fa-magic",
+                    confirmText: "Load Preset",
+                    confirmClass: "pc-btn-primary",
+                    onConfirm: function() {
+                        pcApplyPresetData(preset);
+                    }
+                });
             }
+
+            function pcApplyPresetData(preset) {
+                var nameInput = document.querySelector("input[name='name']");
+                var titleInput = document.querySelector("input[name='title']");
+                var subInput = document.querySelector("input[name='subtitle']");
+                if (nameInput) nameInput.value = preset.name;
+                if (titleInput) titleInput.value = preset.title;
+                if (subInput) subInput.value = preset.subtitle;
+
+                var container = document.getElementById("pcTiersContainer");
+                container.innerHTML = "";
+                pcTierCounter = 0;
+
+                preset.tiers.forEach(function(t, idx) {
+                    pcTierCounter++;
+                    var isHigh = !!t.highlight;
+                    var card = document.createElement("div");
+                    card.className = "pc-tier-editor-card";
+                    card.setAttribute("data-tier-index", pcTierCounter);
+                    card.style.cssText = "background:#FFFFFF; border:2px solid " + (isHigh ? "#2563EB" : "#E2E8F0") + "; border-radius:14px; padding:18px; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.03);";
+
+                    var cardHtml = "<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #F1F5F9;'>";
+                    cardHtml += "  <span style='font-weight:800; font-size:13px; color:" + (isHigh ? "#2563EB" : "#475569") + ";'><i class='fas fa-layer-group'></i> Tier #" + pcTierCounter + "</span>";
+                    cardHtml += "  <button type='button' class='pc-btn pc-btn-danger' style='padding:3px 8px; font-size:11px;' onclick='pcRemoveTierColumn(" + pcTierCounter + ")' title='Remove Tier'><i class='fas fa-trash'></i></button>";
+                    cardHtml += "</div>";
+
+                    cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Tier Slug / ID</label><input type='text' name='tiers[" + pcTierCounter + "][id]' value='" + t.id + "' class='pc-input pc-tier-slug' style='font-size:12.5px;' onchange='pcLiveSyncTierSlug(this, " + pcTierCounter + ")' required></div>";
+                    cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Tier Title</label><input type='text' name='tiers[" + pcTierCounter + "][name]' value='" + t.name.replace(/"/g, "&quot;") + "' class='pc-input pc-tier-name' style='font-weight:700; font-size:13.5px;' oninput='pcLiveSyncTierHeader(this, " + pcTierCounter + ")' required></div>";
+                    cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Tagline</label><input type='text' name='tiers[" + pcTierCounter + "][tagline]' value='" + (t.tagline || "").replace(/"/g, "&quot;") + "' class='pc-input' placeholder='e.g. For Personal Sites'></div>";
+                    cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Pill Badge</label><input type='text' name='tiers[" + pcTierCounter + "][badge]' value='" + (t.badge || "").replace(/"/g, "&quot;") + "' class='pc-input pc-tier-badge' placeholder='e.g. MOST POPULAR' oninput='pcLiveSyncTierBadge(this, " + pcTierCounter + ")'></div>";
+                    cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Badge Color Scheme</label><select name='tiers[" + pcTierCounter + "][badge_color]' class='pc-input' onchange='pcLiveSyncTierBadge(this.closest(".pc-tier-editor-card").querySelector(".pc-tier-badge"), " + pcTierCounter + ")'><option value='blue'" + (t.badge_color === "blue" ? " selected" : "") + ">Royal Blue Pill</option><option value='amber'" + (t.badge_color === "amber" ? " selected" : "") + ">Amber / Orange Pill</option><option value='green'" + (t.badge_color === "green" ? " selected" : "") + ">Emerald Green Pill</option></select></div>";
+                    cardHtml += "<div class='pc-form-group' style='margin-bottom:12px; background:#F8FAFC; padding:8px 10px; border-radius:6px;'><label style='display:flex; align-items:center; gap:8px; cursor:pointer;'><input type='checkbox' name='tiers[" + pcTierCounter + "][highlight]' value='1'" + (isHigh ? " checked" : "") + " onchange='this.closest(".pc-tier-editor-card").style.borderColor = this.checked ? "#2563EB" : "#E2E8F0"'> <strong style='font-size:12.5px; color:#1E293B;'>Highlight Column (Featured / Pro)</strong></label></div>";
+                    cardHtml += "<div class='pc-form-group' style='margin-bottom:10px;'><label class='pc-form-label'>Button Text</label><input type='text' name='tiers[" + pcTierCounter + "][button_text]' value='" + (t.button_text || "View Plans") + "' class='pc-input'></div>";
+                    cardHtml += "<div class='pc-form-group' style='margin-bottom:0;'><label class='pc-form-label'>Button Target Link</label><input type='text' name='tiers[" + pcTierCounter + "][button_link]' value='" + (t.button_link || "cart.php") + "' class='pc-input pc-tier-link'></div>";
+
+                    card.innerHTML = cardHtml;
+                    container.appendChild(card);
+                });
+
+                var theadTr = document.querySelector("#pcSpecsTable thead tr");
+                theadTr.innerHTML = "<th style='width:50px; text-align:center;'><i class='fas fa-grip-lines' title='Drag rows to reorder'></i></th><th style='width:250px;'>Specification Label & Icon</th><th style='width:220px;'>Hover Tooltip (ⓘ)</th>";
+
+                preset.tiers.forEach(function(t) {
+                    var th = document.createElement("th");
+                    th.className = "pc-th-tier-" + t.id;
+                    th.setAttribute("data-tier-id", t.id);
+                    th.style.cssText = "text-align:center; min-width:160px;";
+                    var bText = t.badge ? "<div class='pc-th-badge-preview pc-badge-" + (t.badge_color || "blue") + "'>" + t.badge + "</div>" : "";
+                    th.innerHTML = bText + "<div class='pc-th-title'>" + t.name + "</div>";
+                    theadTr.appendChild(th);
+                });
+
+                var actionsTh = document.createElement("th");
+                actionsTh.style.cssText = "width:90px; text-align:center;";
+                actionsTh.textContent = "Actions";
+                theadTr.appendChild(actionsTh);
+
+                var tbody = document.getElementById("pcSpecsTableBody");
+                tbody.innerHTML = "";
+                pcRowCounter = 0;
+
+                preset.specs.forEach(function(s, sIdx) {
+                    pcRowCounter++;
+                    var tr = document.createElement("tr");
+                    tr.className = "pc-spec-row-item";
+                    tr.setAttribute("data-row-index", pcRowCounter);
+
+                    var html = "<td style='text-align:center; vertical-align:middle;' class='pc-drag-handle' title='Drag up or down to reorder'><i class='fas fa-grip-vertical'></i> <span class='pc-row-num' style='font-weight:700; font-size:12px; margin-left:2px;'>" + (sIdx + 1) + "</span></td>";
+                    html += "<td>";
+                    html += "  <input type='hidden' name='specs[" + pcRowCounter + "][id]' value='" + s.id + "' class='pc-spec-id'>";
+                    html += "  <div style='margin-bottom:6px;'><input type='text' name='specs[" + pcRowCounter + "][label]' value='" + s.label.replace(/"/g, "&quot;") + "' class='pc-input' style='font-weight:700;' required></div>";
+                    html += "  <div style='display:flex; align-items:center; gap:6px;'><span style='font-size:11px; color:#64748B;'><i class='fas fa-icons'></i> Icon:</span><input type='text' name='specs[" + pcRowCounter + "][icon]' value='" + s.icon + "' class='pc-input' style='font-size:11.5px; padding:4px 8px; height:28px;'></div>";
+                    html += "</td>";
+                    html += "<td><textarea name='specs[" + pcRowCounter + "][tooltip]' class='pc-input' rows='2' style='font-size:12px; resize:vertical;'>" + (s.tooltip || "").replace(/"/g, "&quot;") + "</textarea></td>";
+
+                    preset.tiers.forEach(function(t) {
+                        var val = s.values[t.id] !== undefined ? s.values[t.id] : "";
+                        html += "<td class='pc-td-tier-" + t.id + "' data-tier-id='" + t.id + "'>";
+                        html += "  <div style='display:flex; flex-direction:column; gap:6px;'>";
+                        html += "    <input type='text' name='specs[" + pcRowCounter + "][values][" + t.id + "]' value='" + val.replace(/"/g, "&quot;") + "' class='pc-input pc-val-input'>";
+                        html += "    <div style='display:flex; gap:3px; flex-wrap:wrap;'>";
+                        html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "yes")'>✓ Yes</button>";
+                        html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "no")'>— No</button>";
+                        html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "Shared")'>Shared</button>";
+                        html += "      <button type='button' class='pc-btn pc-btn-secondary' style='padding:2px 5px; font-size:10px; border-radius:4px;' onclick='pcSetCellVal(this, "Dedicated")'>Dedicated</button>";
+                        html += "    </div>";
+                        html += "  </div>";
+                        html += "</td>";
+                    });
+
+                    html += "<td style='text-align:center;'>";
+                    html += "  <div style='display:flex; justify-content:center; gap:4px;'>";
+                    html += "    <button type='button' class='pc-btn pc-btn-secondary' style='padding:4px 6px; font-size:11px;' onclick='pcMoveRow(this, -1)' title='Move Up'><i class='fas fa-chevron-up'></i></button>";
+                    html += "    <button type='button' class='pc-btn pc-btn-secondary' style='padding:4px 6px; font-size:11px;' onclick='pcMoveRow(this, 1)' title='Move Down'><i class='fas fa-chevron-down'></i></button>";
+                    html += "    <button type='button' class='pc-btn pc-btn-danger' style='padding:4px 6px; font-size:11px;' onclick='pcDeleteRow(this)' title='Delete Row'><i class='fas fa-trash'></i></button>";
+                    html += "  </div>";
+                    html += "</td>";
+
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                });
+
+                pcInitDragAndDrop();
+                pcToast("✓ " + preset.name + " template loaded successfully!", "success");
+            }
+
+            // Initialize Drag and Drop on Page Load
+            document.addEventListener("DOMContentLoaded", function() {
+                pcInitDragAndDrop();
+            });
+            setTimeout(pcInitDragAndDrop, 200);
             </script>
-            ';
+            <?php
         }
 
         if ($action === 'display_settings') {
@@ -1353,51 +1769,119 @@ if (!function_exists('plancomparison_output')) {
         }
 
         // In-Module Custom Delete Confirmation Modal HTML & JS
-        echo '
-        <div id="pcDeleteModal" class="pc-modal-backdrop" onclick="if(event.target === this) pcCloseDeleteModal();">
+        ?>
+        <div id="pcUniversalModal" class="pc-modal-backdrop" onclick="if(event.target === this) pcCloseModal();">
             <div class="pc-modal-card">
-                <div class="pc-modal-icon-wrap">
-                    <i class="fas fa-trash-alt"></i>
+                <div id="pcModalIconWrap" class="pc-modal-icon-wrap" style="background:#FEE2E2; color:#DC2626;">
+                    <i id="pcModalIcon" class="fas fa-trash-alt"></i>
                 </div>
-                <h3 class="pc-modal-title">Delete Comparison Matrix?</h3>
-                <p class="pc-modal-desc">
+                <h3 id="pcModalTitle" class="pc-modal-title">Delete Comparison Matrix?</h3>
+                <p id="pcModalDesc" class="pc-modal-desc">
                     Are you sure you want to permanently delete <strong id="pcDeleteMatrixName" style="color:#0F172A;">this matrix</strong>? This action cannot be undone.
                 </p>
                 <div class="pc-modal-actions">
-                    <button type="button" class="pc-btn pc-btn-secondary" onclick="pcCloseDeleteModal()">Cancel</button>
-                    <a id="pcConfirmDeleteBtn" href="#" class="pc-btn pc-btn-danger"><i class="fas fa-trash-alt"></i> Yes, Delete Matrix</a>
+                    <button type="button" class="pc-btn pc-btn-secondary" onclick="pcCloseModal()">Cancel</button>
+                    <a id="pcModalActionLink" href="#" class="pc-btn pc-btn-danger" style="display:none;"><i class="fas fa-check"></i> Confirm</a>
+                    <button id="pcModalActionBtn" type="button" class="pc-btn pc-btn-danger"><i class="fas fa-check"></i> Confirm</button>
                 </div>
             </div>
         </div>
+        <div id="pcToastContainer" class="pc-toast-container"></div>
 
         <script>
-        function pcOpenDeleteModal(deleteUrl, matrixName) {
-            var modal = document.getElementById("pcDeleteModal");
-            var confirmBtn = document.getElementById("pcConfirmDeleteBtn");
-            var nameEl = document.getElementById("pcDeleteMatrixName");
-            if (confirmBtn) confirmBtn.href = deleteUrl;
-            if (nameEl) nameEl.textContent = matrixName ? "\"" + matrixName + "\"" : "this matrix";
+        window.pcModalCallback = null;
+
+        function pcOpenModal(opts) {
+            var modal = document.getElementById("pcUniversalModal");
+            var titleEl = document.getElementById("pcModalTitle");
+            var descEl = document.getElementById("pcModalDesc");
+            var iconEl = document.getElementById("pcModalIcon");
+            var iconWrap = document.getElementById("pcModalIconWrap");
+            var actionBtn = document.getElementById("pcModalActionBtn");
+            var actionLink = document.getElementById("pcModalActionLink");
+
+            if (titleEl) titleEl.textContent = opts.title || "Confirm Action";
+            if (descEl) descEl.innerHTML = opts.desc || "Are you sure you want to proceed?";
+            if (iconEl) iconEl.className = "fas " + (opts.icon || "fa-exclamation-triangle");
+
+            var isDanger = opts.confirmClass ? opts.confirmClass.indexOf("danger") !== -1 : true;
+            if (iconWrap) {
+                iconWrap.style.background = isDanger ? "#FEE2E2" : "#DBEAFE";
+                iconWrap.style.color = isDanger ? "#DC2626" : "#2563EB";
+            }
+
+            if (opts.href) {
+                if (actionLink) {
+                    actionLink.style.display = "inline-flex";
+                    actionLink.href = opts.href;
+                    actionLink.innerHTML = "<i class='fas " + (opts.icon || "fa-check") + "'></i> " + (opts.confirmText || "Confirm");
+                    actionLink.className = "pc-btn " + (opts.confirmClass || "pc-btn-danger");
+                }
+                if (actionBtn) actionBtn.style.display = "none";
+            } else {
+                if (actionLink) actionLink.style.display = "none";
+                if (actionBtn) {
+                    actionBtn.style.display = "inline-flex";
+                    actionBtn.innerHTML = "<i class='fas " + (opts.icon || "fa-check") + "'></i> " + (opts.confirmText || "Confirm");
+                    actionBtn.className = "pc-btn " + (opts.confirmClass || "pc-btn-danger");
+                    window.pcModalCallback = opts.onConfirm || null;
+                    actionBtn.onclick = function() {
+                        pcCloseModal();
+                        if (typeof window.pcModalCallback === "function") {
+                            window.pcModalCallback();
+                        }
+                    };
+                }
+            }
+
             if (modal) {
                 modal.classList.add("pc-modal-open");
                 document.body.style.overflow = "hidden";
             }
         }
 
-        function pcCloseDeleteModal() {
-            var modal = document.getElementById("pcDeleteModal");
+        function pcCloseModal() {
+            var modal = document.getElementById("pcUniversalModal");
             if (modal) {
                 modal.classList.remove("pc-modal-open");
                 document.body.style.overflow = "";
             }
+            window.pcModalCallback = null;
+        }
+
+        function pcOpenDeleteModal(deleteUrl, matrixName) {
+            pcOpenModal({
+                title: "Delete Comparison Matrix?",
+                desc: "Are you sure you want to permanently delete <strong>" + (matrixName || "this matrix") + "</strong>? This action cannot be undone.",
+                icon: "fa-trash-alt",
+                confirmText: "Yes, Delete Matrix",
+                confirmClass: "pc-btn-danger",
+                href: deleteUrl
+            });
+        }
+
+        function pcToast(message, type) {
+            type = type || "info";
+            var container = document.getElementById("pcToastContainer");
+            if (!container) return;
+            var toast = document.createElement("div");
+            toast.className = "pc-toast pc-toast-" + type;
+            var icon = type === "success" ? "fa-check-circle" : (type === "error" ? "fa-exclamation-circle" : "fa-info-circle");
+            toast.innerHTML = "<i class='fas " + icon + "'></i> <span>" + message + "</span>";
+            container.appendChild(toast);
+            setTimeout(function() { toast.classList.add("pc-toast-show"); }, 10);
+            setTimeout(function() {
+                toast.classList.remove("pc-toast-show");
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
         }
 
         document.addEventListener("keydown", function(e) {
             if (e.key === "Escape") {
-                pcCloseDeleteModal();
+                pcCloseModal();
             }
         });
         </script>
-        ';
-
+        <?php
     }
 }

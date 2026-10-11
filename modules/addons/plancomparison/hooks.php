@@ -834,3 +834,75 @@ add_hook('ClientAreaFooterOutput', 1, function ($vars) {
 
     return $js;
 });
+
+/**
+ * 3. Admin Area Hook: Ensure Bahari Plan & Tier Comparison is highlighted and scrollable in Addons menu
+ */
+add_hook('AdminAreaHeaderOutput', 1, function ($vars) {
+    return '
+    <style>
+        /* Make sure admin dropdown menus are scrollable so 30+ addons never get cut off */
+        .navbar-collapse ul li.has-dropdown ul, 
+        ul.left-nav li.has-dropdown ul,
+        .dropdown-menu,
+        #nav .has-dropdown ul,
+        ul.slim {
+            max-height: 80vh !important;
+            overflow-y: auto !important;
+            scrollbar-width: thin;
+        }
+        .pc-addon-nav-item a {
+            color: #1E60F8 !important;
+            font-weight: 700 !important;
+            background: rgba(30, 96, 248, 0.06) !important;
+        }
+        .pc-addon-nav-item a:hover {
+            background: #1E60F8 !important;
+            color: #ffffff !important;
+        }
+    </style>
+    <script>
+    (function() {
+        function highlightPlanComparisonNav() {
+            try {
+                // Find existing links to plancomparison in dropdown menus
+                var links = document.querySelectorAll("a[href*='addonmodules.php?module=plancomparison']");
+                if (links.length > 0) {
+                    links.forEach(function(a) {
+                        a.innerHTML = '<i class="fas fa-layer-group" style="color:#1E60F8; margin-right:6px;"></i> <strong>Bahari Plan & Tier Comparison</strong>';
+                        var li = a.closest("li");
+                        if (li) {
+                            li.classList.add("pc-addon-nav-item");
+                            // Move to top of its parent list for immediate visibility
+                            var parent = li.parentElement;
+                            if (parent && parent.firstElementChild !== li) {
+                                parent.insertBefore(li, parent.firstElementChild);
+                            }
+                        }
+                    });
+                } else {
+                    // Inject at top of any Addon dropdown menu if not already present
+                    var addonMenus = document.querySelectorAll("li.has-dropdown ul, .dropdown-menu");
+                    addonMenus.forEach(function(ul) {
+                        var hasAddonLink = ul.querySelector("a[href*='addonmodules.php']");
+                        if (hasAddonLink && !ul.querySelector(".pc-addon-injected")) {
+                            var li = document.createElement("li");
+                            li.className = "pc-addon-nav-item pc-addon-injected";
+                            li.innerHTML = '<a href="addonmodules.php?module=plancomparison"><i class="fas fa-layer-group" style="color:#1E60F8; margin-right:6px;"></i> <strong>Bahari Plan & Tier Comparison</strong></a>';
+                            ul.insertBefore(li, ul.firstChild);
+                        }
+                    });
+                }
+            } catch(e) {}
+        }
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", highlightPlanComparisonNav);
+        } else {
+            highlightPlanComparisonNav();
+        }
+        setTimeout(highlightPlanComparisonNav, 300);
+        setTimeout(highlightPlanComparisonNav, 1000);
+    })();
+    </script>
+    ';
+});
