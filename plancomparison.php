@@ -518,8 +518,23 @@ if (!function_exists('plancomparison_output')) {
             font-size: 13px;
             min-width: 600px;
         }
-        .pc-table-grid th, 
-        .pc-table-grid td .pc-btn {
+        .pc-table-grid th {
+            display: table-cell !important;
+            background: #F8FAFC;
+            font-weight: 700;
+            color: #334155;
+            padding: 12px 14px;
+            border: 1px solid #E2E8F0;
+            vertical-align: middle;
+        }
+        .pc-table-grid td {
+            display: table-cell !important;
+            padding: 10px 12px;
+            border: 1px solid #E2E8F0;
+            vertical-align: middle;
+        }
+        .pc-table-grid td .pc-btn,
+        .pc-table-grid th .pc-btn {
             width: auto !important;
             margin: 0 !important;
             display: inline-flex !important;
@@ -531,17 +546,6 @@ if (!function_exists('plancomparison_output')) {
             align-items: center;
             gap: 6px;
             justify-content: center;
-        }
-
-        .pc-table-grid td {
-            padding: 10px 12px;
-            border: 1px solid #E2E8F0;
-            vertical-align: middle;
-        }
-        .pc-table-grid th {
-            background: #F8FAFC;
-            font-weight: 700;
-            color: #334155;
         }
 
         /* Responsive Layout Grid */
