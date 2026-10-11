@@ -835,13 +835,13 @@ add_hook('ClientAreaFooterOutput', 1, function ($vars) {
     return $js;
 });
 
+
 /**
  * 3. Admin Area Hook: Ensure Bahari Plan & Tier Comparison is highlighted and scrollable in Addons menu
  */
 add_hook('AdminAreaHeaderOutput', 1, function ($vars) {
-    return '
+    return <<<'HTML'
     <style>
-        /* Make sure admin dropdown menus are scrollable so 30+ addons never get cut off */
         .navbar-collapse ul li.has-dropdown ul, 
         ul.left-nav li.has-dropdown ul,
         .dropdown-menu,
@@ -865,15 +865,13 @@ add_hook('AdminAreaHeaderOutput', 1, function ($vars) {
     (function() {
         function highlightPlanComparisonNav() {
             try {
-                // Find existing links to plancomparison in dropdown menus
-                var links = document.querySelectorAll("a[href*='addonmodules.php?module=plancomparison']");
+                var links = document.querySelectorAll('a[href*="addonmodules.php?module=plancomparison"]');
                 if (links.length > 0) {
                     links.forEach(function(a) {
                         a.innerHTML = '<i class="fas fa-layer-group" style="color:#1E60F8; margin-right:6px;"></i> <strong>Bahari Plan & Tier Comparison</strong>';
                         var li = a.closest("li");
                         if (li) {
                             li.classList.add("pc-addon-nav-item");
-                            // Move to top of its parent list for immediate visibility
                             var parent = li.parentElement;
                             if (parent && parent.firstElementChild !== li) {
                                 parent.insertBefore(li, parent.firstElementChild);
@@ -881,10 +879,9 @@ add_hook('AdminAreaHeaderOutput', 1, function ($vars) {
                         }
                     });
                 } else {
-                    // Inject at top of any Addon dropdown menu if not already present
                     var addonMenus = document.querySelectorAll("li.has-dropdown ul, .dropdown-menu");
                     addonMenus.forEach(function(ul) {
-                        var hasAddonLink = ul.querySelector("a[href*='addonmodules.php']");
+                        var hasAddonLink = ul.querySelector('a[href*="addonmodules.php"]');
                         if (hasAddonLink && !ul.querySelector(".pc-addon-injected")) {
                             var li = document.createElement("li");
                             li.className = "pc-addon-nav-item pc-addon-injected";
@@ -904,5 +901,5 @@ add_hook('AdminAreaHeaderOutput', 1, function ($vars) {
         setTimeout(highlightPlanComparisonNav, 1000);
     })();
     </script>
-    ';
+HTML;
 });
