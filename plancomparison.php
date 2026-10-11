@@ -971,14 +971,40 @@ if (!function_exists('plancomparison_output')) {
             echo '  </div>';
 
             echo '  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">';
-            echo '    <label class="pc-form-label"><i class="fas fa-bullseye text-primary"></i> Target WHMCS Product Groups</label>';
-            echo '    <select name="groups[]" multiple size="5" class="pc-input" style="height:115px; font-size:12.5px;">';
+            echo '    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
+            echo '      <label class="pc-form-label" style="margin:0;"><i class="fas fa-bullseye text-primary"></i> Target Product Groups</label>';
+            echo '      <div style="display:flex; align-items:center; gap:8px;">';
+            echo '        <span id="pcGroupSelectedCount" style="font-size:11.5px; font-weight:700; background:#DBEAFE; color:#1E40AF; padding:2px 8px; border-radius:12px;">' . count($selectedGroups) . ' Selected</span>';
+            echo '        <button type="button" class="pc-btn pc-btn-secondary" style="padding:2px 7px; font-size:11px;" onclick="pcToggleAllGroups(true)">All</button>';
+            echo '        <button type="button" class="pc-btn pc-btn-secondary" style="padding:2px 7px; font-size:11px;" onclick="pcToggleAllGroups(false)">None</button>';
+            echo '      </div>';
+            echo '    </div>';
+
+            echo '    <div style="position:relative; margin-bottom:8px;">';
+            echo '      <i class="fas fa-search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94A3B8; font-size:12px;"></i>';
+            echo '      <input type="text" id="pcGroupSearchInput" placeholder="Quick search product groups..." class="pc-input" style="padding-left:30px; font-size:12px; height:32px;" oninput="pcFilterGroupList(this.value)">';
+            echo '    </div>';
+
+            echo '    <div id="pcGroupListContainer" style="max-height:160px; overflow-y:auto; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:6px; scrollbar-width:thin;">';
             foreach ($allGroups as $g) {
-                $sel = in_array($g->id, $selectedGroups) ? 'selected' : '';
-                echo '<option value="' . (int)$g->id . '" ' . $sel . '>' . plancomparison_h($g->name) . '</option>';
+                $isChecked = in_array($g->id, $selectedGroups);
+                echo '    <label class="pc-group-item ' . ($isChecked ? 'pc-group-active' : '') . '" style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12.5px; margin-bottom:2px; transition:all 0.15s;' . ($isChecked ? ' background:#EFF6FF;' : '') . '">';
+                echo '      <input type="checkbox" name="groups[]" value="' . (int)$g->id . '" class="pc-group-checkbox" ' . ($isChecked ? 'checked' : '') . ' style="accent-color:#2563EB; width:15px; height:15px; cursor:pointer;" onchange="pcOnGroupChange(this)">';
+                echo '      <span class="pc-group-name" style="flex:1; font-weight:500; color:' . ($isChecked ? '#1E40AF' : '#1E293B') . ';">' . plancomparison_h($g->name) . '</span>';
+                echo '      <span style="font-size:10.5px; color:#94A3B8; background:#F1F5F9; padding:1px 6px; border-radius:4px;">ID #' . (int)$g->id . '</span>';
+                echo '    </label>';
             }
-            echo '    </select>';
-            echo '    <div style="margin-top:10px;"><label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" name="enabled" value="1" ' . ($enabled ? 'checked' : '') . '> <strong style="font-size:12.5px; color:#0F172A;">Enable Matrix on Target Groups</strong></label></div>';
+            echo '    </div>';
+
+            echo '    <div style="margin-top:12px; padding-top:10px; border-top:1px solid #E2E8F0;">';
+            echo '      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">';
+            echo '        <input type="checkbox" name="enabled" value="1" ' . ($enabled ? 'checked' : '') . ' style="accent-color:#10B981; width:16px; height:16px;">';
+            echo '        <div>';
+            echo '          <strong style="font-size:13px; color:#0F172A;">Enable Matrix on Target Groups</strong>';
+            echo '          <div style="font-size:11.5px; color:#64748B;">Displays this comparison matrix above or below plans on selected group checkout pages.</div>';
+            echo '        </div>';
+            echo '      </label>';
+            echo '    </div>';
             echo '  </div>';
             echo '</div>';
 
@@ -1756,6 +1782,53 @@ function pcApplyPresetData(preset) {
 
     pcInitDragAndDrop();
     pcToast('✓ ' + preset.name + ' template loaded successfully!', 'success');
+}
+
+function pcOnGroupChange(chk) {
+    var label = chk.closest('.pc-group-item');
+    var nameSpan = label ? label.querySelector('.pc-group-name') : null;
+    if (chk.checked) {
+        if (label) {
+            label.style.background = '#EFF6FF';
+            label.classList.add('pc-group-active');
+        }
+        if (nameSpan) nameSpan.style.color = '#1E40AF';
+    } else {
+        if (label) {
+            label.style.background = 'transparent';
+            label.classList.remove('pc-group-active');
+        }
+        if (nameSpan) nameSpan.style.color = '#1E293B';
+    }
+    pcUpdateGroupCount();
+}
+
+function pcUpdateGroupCount() {
+    var checked = document.querySelectorAll('.pc-group-checkbox:checked').length;
+    var countEl = document.getElementById('pcGroupSelectedCount');
+    if (countEl) countEl.textContent = checked + ' Selected';
+}
+
+function pcToggleAllGroups(enableAll) {
+    var items = document.querySelectorAll('.pc-group-item');
+    items.forEach(function(item) {
+        if (item.style.display !== 'none') {
+            var chk = item.querySelector('.pc-group-checkbox');
+            if (chk) {
+                chk.checked = !!enableAll;
+                pcOnGroupChange(chk);
+            }
+        }
+    });
+}
+
+function pcFilterGroupList(query) {
+    var q = (query || '').toLowerCase().trim();
+    var items = document.querySelectorAll('.pc-group-item');
+    items.forEach(function(item) {
+        var name = (item.querySelector('.pc-group-name') ? item.querySelector('.pc-group-name').textContent : '').toLowerCase();
+        item.style.display = (!q || name.indexOf(q) !== -1) ? 'flex' : 'none';
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
