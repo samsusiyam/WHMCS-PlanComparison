@@ -50,7 +50,7 @@ if (!function_exists('plancomparison_hook_get_setting')) {
 }
 
 if (!function_exists('plancomparison_get_matrix_for_cart')) {
-    function plancomparison_get_matrix_for_cart($gid = 0) {
+    function plancomparison_get_matrix_for_cart($gid = 0, $strictGroups = true) {
         try {
             if (!Capsule::schema()->hasTable('mod_plancomparison_matrices')) {
                 return null;
@@ -74,18 +74,23 @@ if (!function_exists('plancomparison_get_matrix_for_cart')) {
                         return $m;
                     }
                 }
-            }
-
-            // 2. Fall back to global matrix (groups is empty or contains "all" or 0)
-            foreach ($allMatrices as $m) {
-                $gList = json_decode($m->groups, true);
-                if (empty($gList) || !is_array($gList) || in_array('all', $gList) || in_array(0, $gList)) {
-                    return $m;
+                // If strict groups is enabled, do not show on non-targeted groups!
+                if ($strictGroups) {
+                    return null;
                 }
             }
 
-            // 3. Fallback to the first available matrix
-            return $allMatrices->first();
+            // 2. Global matrix (if groups is empty or contains "all" or 0)
+            if (!$strictGroups) {
+                foreach ($allMatrices as $m) {
+                    $gList = json_decode($m->groups, true);
+                    if (empty($gList) || !is_array($gList) || in_array('all', $gList) || in_array(0, $gList)) {
+                        return $m;
+                    }
+                }
+            }
+
+            return null;
         } catch (\Exception $e) {
             return null;
         }
@@ -577,6 +582,16 @@ add_hook('ClientAreaFooterOutput', 1, function ($vars) {
         return '';
     }
 
+    $showOnCatalog = plancomparison_is_truthy(plancomparison_hook_get_setting('show_on_catalog', 'on'));
+    $showOnConfigure = plancomparison_is_truthy(plancomparison_hook_get_setting('show_on_configure', 'off'));
+    $showOnCart = plancomparison_is_truthy(plancomparison_hook_get_setting('show_on_cart', 'off'));
+    $strictGroups = plancomparison_is_truthy(plancomparison_hook_get_setting('strict_groups', 'on'));
+
+    // Determine current action / step
+    $action = isset($_GET['a']) ? strtolower(trim($_GET['a'])) : (isset($vars['action']) ? strtolower(trim($vars['action'])) : '');
+    $filename = isset($vars['filename']) ? $vars['filename'] : '';
+    $template = isset($vars['templatefile']) ? $vars['templatefile'] : '';
+
     // Determine current group ID (GID)
     $gid = 0;
     if (isset($vars['gid']) && (int)$vars['gid'] > 0) {
@@ -587,16 +602,27 @@ add_hook('ClientAreaFooterOutput', 1, function ($vars) {
         $gid = (int)$vars['productGroup']->id;
     }
 
-    // Only inject on cart / store order pages
-    $template = isset($vars['templatefile']) ? $vars['templatefile'] : '';
-    $filename = isset($vars['filename']) ? $vars['filename'] : '';
+    // Step classifications:
+    $isConfigure = ($action === 'confproduct' || $action === 'add' || strpos($template, 'configureproduct') !== false);
+    $isCartOrCheckout = ($action === 'view' || $action === 'checkout' || $action === 'complete' || strpos($template, 'viewcart') !== false || strpos($template, 'checkout') !== false);
+    $isCatalog = (!$isConfigure && !$isCartOrCheckout && ($gid > 0 || strpos($template, 'products') !== false));
 
-    $isCartPage = ($filename === 'cart' || strpos($template, 'cart') !== false || strpos($template, 'products') !== false || $gid > 0);
-    if (!$isCartPage) {
+    // Visibility gating
+    if ($isConfigure && !$showOnConfigure) {
+        return '';
+    }
+    if ($isCartOrCheckout && !$showOnCart) {
+        return '';
+    }
+    if ($isCatalog && !$showOnCatalog) {
+        return '';
+    }
+    if (!$isCatalog && !$isConfigure && !$isCartOrCheckout) {
+        // Non-cart page
         return '';
     }
 
-    $matrix = plancomparison_get_matrix_for_cart($gid);
+    $matrix = plancomparison_get_matrix_for_cart($gid, $strictGroups);
     if (!$matrix) {
         return '';
     }

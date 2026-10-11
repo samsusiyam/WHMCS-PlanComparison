@@ -250,6 +250,10 @@ if (!function_exists('plancomparison_output')) {
             plancomparison_save_setting('placement', trim($_POST['placement']));
             plancomparison_save_setting('highlight_color', trim($_POST['highlight_color']));
             plancomparison_save_setting('custom_css', trim($_POST['custom_css']));
+            plancomparison_save_setting('show_on_catalog', isset($_POST['show_on_catalog']) ? 'on' : 'off');
+            plancomparison_save_setting('show_on_configure', isset($_POST['show_on_configure']) ? 'on' : 'off');
+            plancomparison_save_setting('show_on_cart', isset($_POST['show_on_cart']) ? 'on' : 'off');
+            plancomparison_save_setting('strict_groups', isset($_POST['strict_groups']) ? 'on' : 'off');
 
             header('Location: ' . $moduleLink . '&action=display_settings&saved=1');
             exit;
@@ -1845,13 +1849,62 @@ setTimeout(pcInitDragAndDrop, 200);
             $placement = plancomparison_get_setting('placement', 'below_features');
             $color = plancomparison_get_setting('highlight_color', '#1E60F8');
             $customCss = plancomparison_get_setting('custom_css', '');
+            $showOnCatalog = plancomparison_get_setting('show_on_catalog', 'on');
+            $showOnConfigure = plancomparison_get_setting('show_on_configure', 'off');
+            $showOnCart = plancomparison_get_setting('show_on_cart', 'off');
+            $strictGroups = plancomparison_get_setting('strict_groups', 'on');
 
             echo '<div class="pc-card">';
             echo '<form method="post" action="' . $moduleLink . '&action=save_display_settings">';
             echo '  <h3 style="margin:0 0 16px 0; font-size:17px; font-weight:800; color:#0F172A;">Display & Injection Settings</h3>';
 
-            echo '  <div class="pc-form-group">';
-            echo '    <label><input type="checkbox" name="status" value="1" ' . ($status === 'on' ? 'checked' : '') . '> <strong>Enable Module Globally on Storefront</strong></label>';
+            echo '  <div class="pc-form-group" style="margin-bottom:20px;">';
+            echo '    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" name="status" value="1" ' . ($status === 'on' ? 'checked' : '') . ' style="accent-color:#10B981; width:17px; height:17px;"> <strong style="font-size:14px; color:#0F172A;">Enable Module Globally on Storefront</strong></label>';
+            echo '  </div>';
+
+            echo '  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:18px; margin-bottom:20px;">';
+            echo '    <h4 style="margin:0 0 4px 0; font-size:15px; font-weight:800; color:#0F172A;"><i class="fas fa-eye text-primary"></i> Page Visibility & Injection Controls</h4>';
+            echo '    <div style="font-size:12.5px; color:#64748B; margin-bottom:16px;">Choose exactly which order flow pages display comparison matrices and enforce strict targeting rules.</div>';
+
+            echo '    <div style="display:flex; flex-direction:column; gap:12px;">';
+
+            // Toggle 1: Product Catalog
+            echo '      <label style="display:flex; align-items:flex-start; gap:10px; background:#FFFFFF; padding:12px 14px; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer;">';
+            echo '        <input type="checkbox" name="show_on_catalog" value="1" ' . ($showOnCatalog === 'on' ? 'checked' : '') . ' style="accent-color:#2563EB; width:17px; height:17px; margin-top:2px;">';
+            echo '        <div>';
+            echo '          <strong style="font-size:13.5px; color:#0F172A;">Show on Product Catalog Pages (<code>cart.php?gid=X</code>)</strong>';
+            echo '          <div style="font-size:12px; color:#64748B; margin-top:2px;">Displays the comparison table on category overview & plan listing pages where customers choose tiers. (Recommended)</div>';
+            echo '        </div>';
+            echo '      </label>';
+
+            // Toggle 2: Configure Product
+            echo '      <label style="display:flex; align-items:flex-start; gap:10px; background:#FFFFFF; padding:12px 14px; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer;">';
+            echo '        <input type="checkbox" name="show_on_configure" value="1" ' . ($showOnConfigure === 'on' ? 'checked' : '') . ' style="accent-color:#2563EB; width:17px; height:17px; margin-top:2px;">';
+            echo '        <div>';
+            echo '          <strong style="font-size:13.5px; color:#0F172A;">Show on Product Configuration Step (<code>cart.php?a=confproduct</code>)</strong>';
+            echo '          <div style="font-size:12px; color:#64748B; margin-top:2px;">Displays below configurable options (hostname, NS, addons) when customizing a specific plan. Usually disabled to keep focus on ordering.</div>';
+            echo '        </div>';
+            echo '      </label>';
+
+            // Toggle 3: View Cart / Checkout
+            echo '      <label style="display:flex; align-items:flex-start; gap:10px; background:#FFFFFF; padding:12px 14px; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer;">';
+            echo '        <input type="checkbox" name="show_on_cart" value="1" ' . ($showOnCart === 'on' ? 'checked' : '') . ' style="accent-color:#2563EB; width:17px; height:17px; margin-top:2px;">';
+            echo '        <div>';
+            echo '          <strong style="font-size:13.5px; color:#0F172A;">Show on View Cart & Checkout (<code>cart.php?a=view</code> / <code>checkout</code>)</strong>';
+            echo '          <div style="font-size:12px; color:#64748B; margin-top:2px;">Displays in shopping cart review & invoice checkout steps. Keep disabled to prevent checkout clutter.</div>';
+            echo '        </div>';
+            echo '      </label>';
+
+            // Toggle 4: Strict Group Targeting
+            echo '      <label style="display:flex; align-items:flex-start; gap:10px; background:#FFFFFF; padding:12px 14px; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer;">';
+            echo '        <input type="checkbox" name="strict_groups" value="1" ' . ($strictGroups === 'on' ? 'checked' : '') . ' style="accent-color:#10B981; width:17px; height:17px; margin-top:2px;">';
+            echo '        <div>';
+            echo '          <strong style="font-size:13.5px; color:#0F172A;">Strict Target Group Matching</strong>';
+            echo '          <div style="font-size:12px; color:#64748B; margin-top:2px;">Never inject tables onto product groups that were not explicitly checked in your matrix settings. Prevents accidental fallback leaks.</div>';
+            echo '        </div>';
+            echo '      </label>';
+
+            echo '    </div>';
             echo '  </div>';
 
             echo '  <div class="pc-form-group">';
